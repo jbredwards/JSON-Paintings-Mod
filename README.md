@@ -1,8 +1,8 @@
 # JSON-Paintings-Mod
 A minecraft mod that allows custom paintings to be easily added through a json file!
 
--Doesn't add any new painting entities or painting type handlers, rather this mod uses a bytecode manuipilation framework called [ASM](https://asm.ow2.io/) 
-to add new fuctions to `EnumArt`, which means that this mod will work nicely with all other mods that don't override vanilla's painting system!
+-Doesn't add any new painting entities or painting type handlers, rather this mod uses a bytecode manipulation framework called [ASM](https://asm.ow2.io/) 
+to add new functions to `EnumArt`, which means that this mod will work nicely with all other mods that don't override vanilla's painting system!
 
 -Paintings added through this mod use their own textures instead of being stuck to using vanilla's painting texture atlas!
 
@@ -20,16 +20,16 @@ Inside your newly creating paintings folder make a new file and call it `paintin
 
 ### Info for Mod Developers
 #### Why you should consider this mod for your mod's paintings:
-The main problem with using forge's sytem to add custom paintings without this mod is having to edit vanilla's painting texture atlas and not having the option of specifying any other texture. As you may know, only one texture can exist per location at runtime (this is how resourcepacks override textures, by simply creating files with the same location). When multiple mods are loaded that each edit vanilla's painting texture atlas, only one will appear in game because the others will be overriden, which obviously leads to incompatabilities amongst any two mods that add their own paintings using forge's system.
+The main problem with using forge's system to add custom paintings without this mod is having to edit vanilla's painting texture atlas and not having the option of specifying any other texture. As you may know, only one texture can exist per location at runtime (this is how resourcepacks override textures, by simply creating files with the same location). When multiple mods are loaded that each edit vanilla's painting texture atlas, only one will appear in game because the others will be overridden, which obviously leads to incompatibilities amongst any two mods that add their own paintings using forge's system.
 
 Along with allowing players to add their own paintings, JSON Paintings gives other mod developers the ability to add them as well! As stated above, paintings added through this mod have custom textures, which allows you to easily get around the incompatibilities that the forge system causes.
 
-You do not need to add any dependencies to add paintings through this mod's system (no build.gradle headaches)! Instead make a folder named `paintings` in your `assts/modid` folder, and inside that create `paintings.json` (file structure should be `assets/modid/paintings/paintings.json`). While this mod is installed, it will automatically look for that file at runtime, no extra work needed!
+You do not need to add any dependencies to add paintings through this mod's system (no build.gradle headaches)! Instead make a folder named `paintings` in your `assets/modid` folder, and inside that create `paintings.json` (file structure should be `assets/modid/paintings/paintings.json`). While this mod is installed, it will automatically look for that file at runtime, no extra work needed!
 
 ---
 
 ## Getting Started with paintings.json
-The `paintings.json` file you create can be editied with any text editor. **If you're not familiar with json syntax, it's recommended to learn that before going any further. There are plenty of quick helpful sources online that should help you with this. If you've ever read minecraft nbt data before, it should all start looking very familiar to you.** Uppon opening the file for the first time, it's important that you add square brackets, otherwise the file will not be read correctly! The file should look like this, remember to save any changes you make as you go:
+The `paintings.json` file you create can be edited with any text editor. **If you're not familiar with json syntax, it's recommended to learn that before going any further. There are plenty of quick helpful sources online that should help you with this. If you've ever read minecraft nbt data before, it should all start looking very familiar to you.** Upon opening the file for the first time, it's important that you add square brackets, otherwise the file will not be read correctly! The file should look like this, remember to save any changes you make as you go:
 ```
 [
 
