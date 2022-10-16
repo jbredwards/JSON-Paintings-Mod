@@ -14,7 +14,7 @@ to add new functions to `EnumArt`, which means that this mod will work nicely wi
 
 ### Info for Players and Modpack Developers
 To get started with adding your own custom paintings, create a new folder in your `.minecraft` (same folder where your `mods` folder is), and name it `paintings`.
-Inside your newly creating paintings folder make a new file and call it `paintings.json` (file structure should be `.minecraft/paintings/paintings.json`). This file will be in charge of actually adding all the custom paintings to your game! More info about how to use this file can be found under **"Getting Started with paintings.json"** below.
+Inside your newly creating paintings folder make a new file and call it `paintings.json` (file structure should be `.minecraft/paintings/paintings.json`). This file will be in charge of actually adding all the custom paintings to your game! More info about how to use this file can be found under [Getting Started with paintings.json](https://github.com/jbredwards/JSON-Paintings-Mod#getting-started-with-paintingsjson) below.
 
 ---
 
