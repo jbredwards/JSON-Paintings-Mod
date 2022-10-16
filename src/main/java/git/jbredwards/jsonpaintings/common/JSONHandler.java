@@ -80,6 +80,13 @@ public final class JSONHandler
                             art = artIn;
                             art.offsetX = 0;
                             art.offsetY = 0;
+                            //override width, this is not recommended
+                            if(nbt.hasKey("width", NBT.TAG_ANY_NUMERIC))
+                                art.sizeX = Math.max(nbt.getInteger("width") << 4, 16);
+                            //override height, this is not recommended
+                            if(nbt.hasKey("height", NBT.TAG_ANY_NUMERIC))
+                                art.sizeY = Math.max(nbt.getInteger("height") << 4, 16);
+
                             break;
                         }
                     }
@@ -116,9 +123,9 @@ public final class JSONHandler
                             ? buildLocation(textures.getString("side"))
                             : painting.getBackTexture());
 
-                    //fix server issue with painting name sizes
-                    if(art.title.length() > EntityPainting.EnumArt.MAX_NAME_LENGTH)
-                        EntityPainting.EnumArt.MAX_NAME_LENGTH = art.title.length();
+                    //fix server issue with painting title sizes
+                    if(motive.length() > EntityPainting.EnumArt.MAX_NAME_LENGTH)
+                        EntityPainting.EnumArt.MAX_NAME_LENGTH = motive.length();
 
                     painting.setUseSpecialRenderer(true);
                     return art;
