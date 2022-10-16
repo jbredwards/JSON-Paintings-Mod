@@ -1,8 +1,7 @@
 # JSON-Paintings-Mod
 A minecraft mod that allows custom paintings to be easily added through a json file!
 
--Doesn't add any new painting entities or painting type handlers, rather this mod uses a bytecode manipulation framework called [ASM](https://asm.ow2.io/) 
-to expand on vanilla's, which means that this mod will work nicely with all other mods that don't override vanilla's painting system!
+-Doesn't add any new painting entities or painting type handlers, but rather expands on vanilla's system, which means that this mod will work nicely with all other mods that don't override how paintings work!
 
 -Paintings added through this mod use their own textures instead of being stuck to using vanilla's painting texture atlas!
 
