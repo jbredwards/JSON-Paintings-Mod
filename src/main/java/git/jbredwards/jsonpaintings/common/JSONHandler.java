@@ -11,7 +11,6 @@ import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.fml.common.Loader;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,6 +30,7 @@ public final class JSONHandler
 {
     @Nonnull
     public static final ResourceLocation DEFAULT_BACK_TEXTURE = new ResourceLocation(Constants.MODID, "textures/paintings/back.png");
+    static int paintingsCreated = 0;
 
     @Nonnull
     static final Gson GSON = new GsonBuilder()
@@ -42,7 +42,7 @@ public final class JSONHandler
         final File file = new File("paintings", "paintings.json");
         if(file.exists()) {
             ArtDeserializer.INSTANCE.modName = Constants.MODID;
-            ArtDeserializer.INSTANCE.isExternal = false;
+            ArtDeserializer.INSTANCE.isModded = false;
             GSON.fromJson(IOUtils.toString(new FileInputStream(file), Charset.defaultCharset()), EntityPainting.EnumArt[].class);
         }
     }
@@ -53,7 +53,7 @@ public final class JSONHandler
             final @Nullable InputStream file = Loader.class.getResourceAsStream(String.format("/assets/%s/paintings/paintings.json", modId));
             if(file != null) {
                 ArtDeserializer.INSTANCE.modName = modId;
-                ArtDeserializer.INSTANCE.isExternal = true;
+                ArtDeserializer.INSTANCE.isModded = true;
                 GSON.fromJson(IOUtils.toString(file, Charset.defaultCharset()), EntityPainting.EnumArt[].class);
             }
         }
@@ -64,35 +64,47 @@ public final class JSONHandler
         INSTANCE;
 
         String modName;
-        boolean isExternal;
+        boolean isModded;
 
         @Nullable
         @Override
         public EntityPainting.EnumArt deserialize(@Nonnull JsonElement json, @Nonnull Type typeOfT, @Nonnull JsonDeserializationContext context) throws JsonParseException {
             try {
                 final NBTTagCompound nbt = JsonToNBT.getTagFromJson(json.toString());
-                final String name = nbt.getString("name").toLowerCase();
-                if(!name.isEmpty()) {
-                    //builds the art enum
-                    final EntityPainting.EnumArt art = EnumHelper.addArt(
-                            name.toUpperCase(),
-                            nbt.hasKey("title", NBT.TAG_STRING)
-                                    ? nbt.getString("title")
-                                    : StringUtils.capitalize(name),
+                final String motive = nbt.getString("motive");
+                if(!motive.isEmpty()) {
+                    //look for existing painting to override
+                    @Nullable EntityPainting.EnumArt art = null;
+                    for(EntityPainting.EnumArt artIn : EntityPainting.EnumArt.values()) {
+                        if(artIn.title.equals(motive)) {
+                            art = artIn;
+                            art.offsetX = 0;
+                            art.offsetY = 0;
+                            break;
+                        }
+                    }
+
+                    //create new painting if it's not an override
+                    if(art == null) art = EnumHelper.addArt(
+                            "JSON_PAINTINGS_GENERATED_ID" + paintingsCreated++, motive,
                             Math.max(nbt.getInteger("width") << 4, 16),
                             Math.max(nbt.getInteger("height") << 4, 16), 0, 0);
 
-                    //enum already exists with the name
-                    if(art == null) throw new IllegalArgumentException(
-                            "A critical error has occurred while creating painting with the name: " + name);
+                    //should never pass, but exists cause EnumHelper method is nullable
+                    if(art == null) {
+                        paintingsCreated--;
+                        throw new IllegalArgumentException(
+                                "A critical error has occurred while creating painting with the name: " + motive);
+                    }
 
                     //assign texture
                     final NBTTagCompound textures = nbt.getCompoundTag("textures");
                     final IJSONPainting painting = IJSONPainting.from(art);
                     painting.setFrontTexture(textures.hasKey("front", NBT.TAG_STRING)
                             ? buildLocation(textures.getString("front"))
-                            : buildLocation(modName + ":" + (isExternal
-                                    ? "paintings/" + name : name)));
+                            : buildLocation(modName + ":" + (isModded
+                                    ? "paintings/" + motive.toLowerCase()
+                                    : motive.toLowerCase())));
 
                     //assign back texture
                     painting.setBackTexture(textures.hasKey("back", NBT.TAG_STRING)
@@ -112,6 +124,7 @@ public final class JSONHandler
                     return art;
                 }
 
+                else System.out.println("JSON Paintings: A painting has been skipped! Missing name!");
                 return null;
             }
             //likely a bad json

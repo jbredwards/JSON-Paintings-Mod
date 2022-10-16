@@ -11,6 +11,7 @@ import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.LoadController;
 import net.minecraftforge.fml.common.ModMetadata;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -61,7 +62,7 @@ public final class Main extends DummyModContainer
     }
 
     @Subscribe
-    public void commonPreInit(@Nonnull FMLPreInitializationEvent event) throws IOException {
+    public void postInit(@Nonnull FMLPostInitializationEvent event) throws IOException {
         JSONHandler.readMods();
         JSONHandler.readInstance();
     }
