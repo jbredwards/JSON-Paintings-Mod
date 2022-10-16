@@ -12,8 +12,8 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'maven-publish'
 
 version = 'v1.0-mc1.12.2'
-group = 'git.jbredwards.saturationfix' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'SaturationFix'
+group = 'git.jbredwards.jsonpaintings' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = 'JSON-Paintings'
 sourceCompatibility  = targetCompatibility = '1.8'
 
 minecraft {

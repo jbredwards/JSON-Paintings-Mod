@@ -1,12 +1,13 @@
 package git.jbredwards.jsonpaintings.common;
 
 import com.google.gson.*;
+import git.jbredwards.jsonpaintings.Constants;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.fml.common.Loader;
 import org.apache.commons.io.IOUtils;
@@ -29,8 +30,7 @@ import java.nio.charset.Charset;
 public final class JSONHandler
 {
     @Nonnull
-    public static final ResourceLocation DEFAULT_BACK_TEXTURE = new ResourceLocation(
-            "jsonpaintings", "textures/paintings/back.png");
+    public static final ResourceLocation DEFAULT_BACK_TEXTURE = new ResourceLocation(Constants.MODID, "paintings/back");
 
     @Nonnull
     static final Gson GSON = new GsonBuilder()
@@ -41,8 +41,8 @@ public final class JSONHandler
     public static void readInstance() throws IOException {
         final File file = new File("paintings", "paintings.json");
         if(file.exists()) {
-            ArtDeserializer.INSTANCE.modName = "jsonpaintings";
-            ArtDeserializer.INSTANCE.defaultTexture = "textures/";
+            ArtDeserializer.INSTANCE.modName = Constants.MODID;
+            ArtDeserializer.INSTANCE.isExternal = false;
             GSON.fromJson(IOUtils.toString(new FileInputStream(file), Charset.defaultCharset()), EntityPainting.EnumArt[].class);
         }
     }
@@ -53,7 +53,7 @@ public final class JSONHandler
             final @Nullable InputStream file = Loader.class.getResourceAsStream(String.format("/assets/%s/paintings/paintings.json", modId));
             if(file != null) {
                 ArtDeserializer.INSTANCE.modName = modId;
-                ArtDeserializer.INSTANCE.defaultTexture = "textures/paintings/";
+                ArtDeserializer.INSTANCE.isExternal = true;
                 GSON.fromJson(IOUtils.toString(file, Charset.defaultCharset()), EntityPainting.EnumArt[].class);
             }
         }
@@ -64,7 +64,7 @@ public final class JSONHandler
         INSTANCE;
 
         String modName;
-        String defaultTexture;
+        boolean isExternal;
 
         @Nullable
         @Override
@@ -76,33 +76,39 @@ public final class JSONHandler
                     //builds the art enum
                     final EntityPainting.EnumArt art = EnumHelper.addArt(
                             name.toUpperCase(),
-                            nbt.hasKey("title", Constants.NBT.TAG_STRING)
+                            nbt.hasKey("title", NBT.TAG_STRING)
                                     ? nbt.getString("title")
                                     : StringUtils.capitalize(name),
-                            Math.min(nbt.getInteger("width") << 4, 16),
-                            Math.min(nbt.getInteger("height") << 4, 16),
-                            nbt.getInteger("offsetX") << 4,
-                            nbt.getInteger("offsetY") << 4);
+                            Math.max(nbt.getInteger("width") << 4, 16),
+                            Math.max(nbt.getInteger("height") << 4, 16), 0, 0);
 
                     //enum already exists with the name
                     if(art == null) throw new IllegalArgumentException(
                             "A critical error has occurred while creating painting with the name: " + name);
 
                     //assign texture
-                    IJSONPainting.from(art).setTexture(
-                            nbt.hasKey("front", Constants.NBT.TAG_STRING)
-                                    ? toLocation(nbt.getString("front"))
-                                    : new ResourceLocation(modName, String.format("%s/%s.png", defaultTexture, name)));
+                    final NBTTagCompound textures = nbt.getCompoundTag("textures");
+                    final IJSONPainting painting = IJSONPainting.from(art);
+                    painting.setFrontTexture(textures.hasKey("front", NBT.TAG_STRING)
+                            ? new ResourceLocation(textures.getString("front"))
+                            : new ResourceLocation(modName, isExternal
+                                    ? "paintings/" + name : name));
 
                     //assign back texture
-                    IJSONPainting.from(art).setBackTexture(
-                            nbt.hasKey("back", Constants.NBT.TAG_STRING)
-                                    ? toLocation(nbt.getString("back"))
-                                    : DEFAULT_BACK_TEXTURE);
+                    painting.setBackTexture(textures.hasKey("back", NBT.TAG_STRING)
+                            ? new ResourceLocation(textures.getString("back"))
+                            : DEFAULT_BACK_TEXTURE);
 
-                    IJSONPainting.from(art).setBackOffsetX(nbt.getInteger("backOffsetX") << 4);
-                    IJSONPainting.from(art).setBackOffsetY(nbt.getInteger("backOffsetY") << 4);
-                    IJSONPainting.from(art).setUseSpecialRenderer(true);
+                    //assign side texture
+                    painting.setSideTexture(textures.hasKey("side", NBT.TAG_STRING)
+                            ? new ResourceLocation(textures.getString("side"))
+                            : painting.getBackTexture());
+
+                    //fix server issue with painting name sizes
+                    if(art.title.length() > EntityPainting.EnumArt.MAX_NAME_LENGTH)
+                        EntityPainting.EnumArt.MAX_NAME_LENGTH = art.title.length();
+
+                    painting.setUseSpecialRenderer(true);
                     return art;
                 }
 
@@ -110,12 +116,6 @@ public final class JSONHandler
             }
             //likely a bad json
             catch (NBTException e) { throw new JsonParseException(e); }
-        }
-
-        @Nonnull
-        ResourceLocation toLocation(@Nonnull String texture) {
-            if(texture.indexOf(':') != -1) return new ResourceLocation(texture);
-            else return new ResourceLocation(modName, texture);
         }
     }
 }

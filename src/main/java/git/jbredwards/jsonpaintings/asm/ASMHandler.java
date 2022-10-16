@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -21,6 +22,8 @@ import java.util.Map;
 @IFMLLoadingPlugin.Name("JSON Paintings Plugin")
 public final class ASMHandler implements IFMLLoadingPlugin
 {
+    public static File modLocation;
+
     @SuppressWarnings("unused")
     public static final class Transformer implements IClassTransformer, Opcodes
     {
@@ -33,35 +36,38 @@ public final class ASMHandler implements IFMLLoadingPlugin
                 //implement interface
                 classNode.interfaces.add("git/jbredwards/jsonpaintings/common/IJSONPainting");
                 //add new fields
-                classNode.fields.add(new FieldNode(ACC_PRIVATE, "texture", "Lnet/minecraft/util/ResourceLocation;", null, null));
+                classNode.fields.add(new FieldNode(ACC_PRIVATE, "frontTexture", "Lnet/minecraft/util/ResourceLocation;", null, null));
                 classNode.fields.add(new FieldNode(ACC_PRIVATE, "backTexture", "Lnet/minecraft/util/ResourceLocation;", null, null));
+                classNode.fields.add(new FieldNode(ACC_PRIVATE, "sideTexture", "Lnet/minecraft/util/ResourceLocation;", null, null));
                 classNode.fields.add(new FieldNode(ACC_PRIVATE, "backOffsetX", "I", null, 0));
                 classNode.fields.add(new FieldNode(ACC_PRIVATE, "backOffsetY", "I", null, 0));
+                classNode.fields.add(new FieldNode(ACC_PRIVATE, "sideOffsetX", "I", null, 0));
+                classNode.fields.add(new FieldNode(ACC_PRIVATE, "sideOffsetY", "I", null, 0));
                 classNode.fields.add(new FieldNode(ACC_PRIVATE, "useSpecialRenderer", "Z", null, false));
                 /*
                  * @ASMGenerated
-                 * public ResourceLocation getTexture()
+                 * public ResourceLocation getFrontTexture()
                  * {
-                 *     return this.texture;
+                 *     return this.frontTexture;
                  * }
                  */
-                final MethodNode getTexture = new MethodNode(ACC_PUBLIC, "getTexture", "()Lnet/minecraft/util/ResourceLocation;", null, null);
+                final MethodNode getTexture = new MethodNode(ACC_PUBLIC, "getFrontTexture", "()Lnet/minecraft/util/ResourceLocation;", null, null);
                 getTexture.visitVarInsn(ALOAD, 0);
-                getTexture.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "texture", "Lnet/minecraft/util/ResourceLocation;");
+                getTexture.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "frontTexture", "Lnet/minecraft/util/ResourceLocation;");
                 getTexture.visitInsn(ARETURN);
                 getTexture.visitMaxs(1, 2);
                 classNode.methods.add(getTexture);
                 /*
                  * @ASMGenerated
-                 * public void setTexture(ResourceLocation texture)
+                 * public void setFrontTexture(ResourceLocation texture)
                  * {
-                 *     this.texture = texture;
+                 *     this.frontTexture = texture;
                  * }
                  */
-                final MethodNode setTexture = new MethodNode(ACC_PUBLIC, "setTexture", "(Lnet/minecraft/util/ResourceLocation;)V", null, null);
+                final MethodNode setTexture = new MethodNode(ACC_PUBLIC, "setFrontTexture", "(Lnet/minecraft/util/ResourceLocation;)V", null, null);
                 setTexture.visitVarInsn(ALOAD, 0);
                 setTexture.visitVarInsn(ALOAD, 1);
-                setTexture.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "texture", "Lnet/minecraft/util/ResourceLocation;");
+                setTexture.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "frontTexture", "Lnet/minecraft/util/ResourceLocation;");
                 setTexture.visitInsn(RETURN);
                 setTexture.visitMaxs(2, 3);
                 classNode.methods.add(setTexture);
@@ -94,58 +100,31 @@ public final class ASMHandler implements IFMLLoadingPlugin
                 classNode.methods.add(setBackTexture);
                 /*
                  * @ASMGenerated
-                 * public int getBackOffsetX()
+                 * public ResourceLocation getSideTexture()
                  * {
-                 *     return this.backOffsetX;
+                 *     return this.sideTexture;
                  * }
                  */
-                final MethodNode getBackOffsetX = new MethodNode(ACC_PUBLIC, "getBackOffsetX", "()I", null, null);
-                getBackOffsetX.visitVarInsn(ALOAD, 0);
-                getBackOffsetX.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "backOffsetX", "I");
-                getBackOffsetX.visitInsn(IRETURN);
-                getBackOffsetX.visitMaxs(1, 2);
-                classNode.methods.add(getBackOffsetX);
+                final MethodNode getSideTexture = new MethodNode(ACC_PUBLIC, "getSideTexture", "()Lnet/minecraft/util/ResourceLocation;", null, null);
+                getSideTexture.visitVarInsn(ALOAD, 0);
+                getSideTexture.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "sideTexture", "Lnet/minecraft/util/ResourceLocation;");
+                getSideTexture.visitInsn(ARETURN);
+                getSideTexture.visitMaxs(1, 2);
+                classNode.methods.add(getSideTexture);
                 /*
                  * @ASMGenerated
-                 * public void setBackOffsetX(int backOffsetX)
+                 * public void setSideTexture(ResourceLocation texture)
                  * {
-                 *     this.backOffsetX = backOffsetX;
+                 *     this.sideTexture = texture;
                  * }
                  */
-                final MethodNode setBackOffsetX = new MethodNode(ACC_PUBLIC, "setBackOffsetX", "(I)V", null, null);
-                setBackOffsetX.visitVarInsn(ALOAD, 0);
-                setBackOffsetX.visitVarInsn(ILOAD, 1);
-                setBackOffsetX.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "backOffsetX", "I");
-                setBackOffsetX.visitInsn(RETURN);
-                setBackOffsetX.visitMaxs(2, 3);
-                classNode.methods.add(setBackOffsetX);
-                /*
-                 * @ASMGenerated
-                 * public int getBackOffsetY()
-                 * {
-                 *     return this.backOffsetY;
-                 * }
-                 */
-                final MethodNode getBackOffsetY = new MethodNode(ACC_PUBLIC, "getBackOffsetY", "()I", null, null);
-                getBackOffsetY.visitVarInsn(ALOAD, 0);
-                getBackOffsetY.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "backOffsetY", "I");
-                getBackOffsetY.visitInsn(IRETURN);
-                getBackOffsetY.visitMaxs(1, 2);
-                classNode.methods.add(getBackOffsetY);
-                /*
-                 * @ASMGenerated
-                 * public void setBackOffsetY(int backOffsetY)
-                 * {
-                 *     this.backOffsetY = backOffsetY;
-                 * }
-                 */
-                final MethodNode setBackOffsetY = new MethodNode(ACC_PUBLIC, "setBackOffsetY", "(I)V", null, null);
-                setBackOffsetY.visitVarInsn(ALOAD, 0);
-                setBackOffsetY.visitVarInsn(ILOAD, 1);
-                setBackOffsetY.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "backOffsetY", "I");
-                setBackOffsetY.visitInsn(RETURN);
-                setBackOffsetY.visitMaxs(2, 3);
-                classNode.methods.add(setBackOffsetY);
+                final MethodNode setSideTexture = new MethodNode(ACC_PUBLIC, "setSideTexture", "(Lnet/minecraft/util/ResourceLocation;)V", null, null);
+                setSideTexture.visitVarInsn(ALOAD, 0);
+                setSideTexture.visitVarInsn(ALOAD, 1);
+                setSideTexture.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "sideTexture", "Lnet/minecraft/util/ResourceLocation;");
+                setSideTexture.visitInsn(RETURN);
+                setSideTexture.visitMaxs(2, 3);
+                classNode.methods.add(setSideTexture);
                 /*
                  * @ASMGenerated
                  * public boolean useSpecialRenderer()
@@ -195,7 +174,7 @@ public final class ASMHandler implements IFMLLoadingPlugin
     public String getModContainerClass() { return "git.jbredwards.jsonpaintings.Main"; }
 
     @Override
-    public void injectData(@Nonnull Map<String, Object> data) {}
+    public void injectData(@Nonnull Map<String, Object> data) { modLocation = (File)data.get("coremodLocation"); }
 
     @Nullable
     @Override
