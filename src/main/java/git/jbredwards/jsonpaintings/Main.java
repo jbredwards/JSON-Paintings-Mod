@@ -36,7 +36,7 @@ public final class Main extends DummyModContainer
         md.name = Constants.NAME;
         md.version = Constants.VERSION;
         md.url = "https://github.com/jbredwards/JSON-Paintings-Mod";
-        md.description = "Easily add custom paintings through json files!";
+        md.description = "Easily add custom paintings through a json file!";
         md.authorList = Collections.singletonList("jbredwards");
     }
 
