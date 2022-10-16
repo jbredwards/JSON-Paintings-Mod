@@ -30,7 +30,7 @@ import java.nio.charset.Charset;
 public final class JSONHandler
 {
     @Nonnull
-    public static final ResourceLocation DEFAULT_BACK_TEXTURE = new ResourceLocation(Constants.MODID, "paintings/back");
+    public static final ResourceLocation DEFAULT_BACK_TEXTURE = new ResourceLocation(Constants.MODID, "textures/paintings/back.png");
 
     @Nonnull
     static final Gson GSON = new GsonBuilder()
@@ -90,18 +90,18 @@ public final class JSONHandler
                     final NBTTagCompound textures = nbt.getCompoundTag("textures");
                     final IJSONPainting painting = IJSONPainting.from(art);
                     painting.setFrontTexture(textures.hasKey("front", NBT.TAG_STRING)
-                            ? new ResourceLocation(textures.getString("front"))
-                            : new ResourceLocation(modName, isExternal
-                                    ? "paintings/" + name : name));
+                            ? buildLocation(textures.getString("front"))
+                            : buildLocation(modName + ":" + (isExternal
+                                    ? "paintings/" + name : name)));
 
                     //assign back texture
                     painting.setBackTexture(textures.hasKey("back", NBT.TAG_STRING)
-                            ? new ResourceLocation(textures.getString("back"))
+                            ? buildLocation(textures.getString("back"))
                             : DEFAULT_BACK_TEXTURE);
 
                     //assign side texture
                     painting.setSideTexture(textures.hasKey("side", NBT.TAG_STRING)
-                            ? new ResourceLocation(textures.getString("side"))
+                            ? buildLocation(textures.getString("side"))
                             : painting.getBackTexture());
 
                     //fix server issue with painting name sizes
@@ -116,6 +116,12 @@ public final class JSONHandler
             }
             //likely a bad json
             catch (NBTException e) { throw new JsonParseException(e); }
+        }
+
+        @Nonnull
+        static ResourceLocation buildLocation(@Nonnull String str) {
+            final ResourceLocation loc = new ResourceLocation(str);
+            return new ResourceLocation(loc.getNamespace(), "textures/" + loc.getPath() + ".png");
         }
     }
 }

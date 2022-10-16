@@ -5,10 +5,8 @@ import com.google.common.eventbus.Subscribe;
 import git.jbredwards.jsonpaintings.asm.ASMHandler;
 import git.jbredwards.jsonpaintings.client.PaintingsResourcePack;
 import git.jbredwards.jsonpaintings.client.RenderJSONPainting;
-import git.jbredwards.jsonpaintings.client.TextureHandler;
 import git.jbredwards.jsonpaintings.common.JSONHandler;
 import net.minecraft.entity.item.EntityPainting;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.LoadController;
@@ -60,12 +58,11 @@ public final class Main extends DummyModContainer
     @Subscribe
     public void clientPreInit(@Nonnull FMLPreInitializationEvent event) {
         RenderingRegistry.registerEntityRenderingHandler(EntityPainting.class, RenderJSONPainting::new);
-        MinecraftForge.EVENT_BUS.register(TextureHandler.class);
     }
 
     @Subscribe
     public void commonPreInit(@Nonnull FMLPreInitializationEvent event) throws IOException {
-        JSONHandler.readInstance();
         JSONHandler.readMods();
+        JSONHandler.readInstance();
     }
 }

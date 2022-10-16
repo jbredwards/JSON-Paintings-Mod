@@ -6,8 +6,8 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.RenderPainting;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.renderer.texture.ITextureObject;
+import net.minecraft.client.renderer.texture.SimpleTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.util.ResourceLocation;
@@ -48,7 +48,10 @@ public class RenderJSONPainting extends RenderPainting
             GlStateManager.enableOutlineMode(getTeamColor(entity));
         }
 
-        renderPainting(entity, painting.getFrontSprite(), painting.getBackSprite(), painting.getSideSprite());
+        final int front = getGlTextureId(painting.getFrontTexture());
+        final int back = getGlTextureId(painting.getBackTexture());
+        final int side = getGlTextureId(painting.getSideTexture());
+        renderPainting(entity, front, back, side);
 
         if(renderOutlines) {
             GlStateManager.disableOutlineMode();
@@ -60,33 +63,12 @@ public class RenderJSONPainting extends RenderPainting
         if(!renderOutlines) renderName(entity, x, y, z);
     }
 
-    @Nullable
-    @Override
-    protected ResourceLocation getEntityTexture(@Nonnull EntityPainting entity) {
-        return IJSONPainting.from(entity.art).useSpecialRenderer()
-                ? TextureMap.LOCATION_BLOCKS_TEXTURE
-                : super.getEntityTexture(entity);
-    }
-
-    protected void renderPainting(@Nonnull EntityPainting entity, @Nonnull TextureAtlasSprite front, @Nonnull TextureAtlasSprite back, @Nonnull TextureAtlasSprite side) {
+    protected void renderPainting(@Nonnull EntityPainting entity, int front, int back, int side) {
         final int width = entity.art.sizeX >> 4;
         final int height = entity.art.sizeY >> 4;
         final int centerX = -entity.art.sizeX >> 1;
         final int centerY = -entity.art.sizeY >> 1;
-        final double factorX = 16.0 / width;
-        final double factorY = 16.0 / height;
-
-        //uv constants
-        final float backMinU = back.getMinU();
-        final float backMaxU = back.getMaxU();
-        final float backMinV = back.getMinV();
-        final float backMaxV = back.getMaxV();
-        final float sideMinU = side.getMinU();
-        final float sideMaxU = side.getMaxU();
-        final float sideMinV = side.getMinV();
-        final float sideMaxV = side.getMaxV();
-        final float sideU = side.getInterpolatedU(1);
-        final float sideV = side.getInterpolatedV(1);
+        final BufferBuilder buffer = Tessellator.getInstance().getBuffer();
 
         for(int x = 0; x < width; x++) {
             for(int y = 0; y < height; y++) {
@@ -96,44 +78,60 @@ public class RenderJSONPainting extends RenderPainting
                 final float maxY = centerY + ((y + 1) << 4);
                 setLightmap(entity, (maxX + minX) / 2, (maxY + minY) / 2);
 
-                final BufferBuilder buffer = Tessellator.getInstance().getBuffer();
-                buffer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
-
                 //front
-                final float frontMinU = front.getInterpolatedU(factorX * (width - x));
-                final float frontMaxU = front.getInterpolatedU(factorX * (width - (x + 1)));
-                final float frontMinV = front.getInterpolatedV(factorY * (height - y));
-                final float frontMaxV = front.getInterpolatedV(factorY * (height - (y + 1)));
+                final float frontMinU = (float)(width - x) / width;
+                final float frontMaxU = (float)(width - x - 1) / width;
+                final float frontMinV = (float)(height - y) / height;
+                final float frontMaxV = (float)(height - y - 1) / height;
+                GlStateManager.bindTexture(front);
+                buffer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
                 buffer.pos(maxX, minY, -0.5).tex(frontMaxU, frontMinV).normal(0, 0, -1).endVertex();
                 buffer.pos(minX, minY, -0.5).tex(frontMinU, frontMinV).normal(0, 0, -1).endVertex();
                 buffer.pos(minX, maxY, -0.5).tex(frontMinU, frontMaxV).normal(0, 0, -1).endVertex();
                 buffer.pos(maxX, maxY, -0.5).tex(frontMaxU, frontMaxV).normal(0, 0, -1).endVertex();
+                Tessellator.getInstance().draw();
 
                 //back
-                buffer.pos(maxX, maxY, 0.5).tex(backMinU, backMinV).normal(0, 0, 1).endVertex();
-                buffer.pos(minX, maxY, 0.5).tex(backMaxU, backMinV).normal(0, 0, 1).endVertex();
-                buffer.pos(minX, minY, 0.5).tex(backMaxU, backMaxV).normal(0, 0, 1).endVertex();
-                buffer.pos(maxX, minY, 0.5).tex(backMinU, backMaxV).normal(0, 0, 1).endVertex();
+                GlStateManager.bindTexture(back);
+                buffer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
+                buffer.pos(maxX, maxY, 0.5).tex(0, 0).normal(0, 0, 1).endVertex();
+                buffer.pos(minX, maxY, 0.5).tex(1, 0).normal(0, 0, 1).endVertex();
+                buffer.pos(minX, minY, 0.5).tex(1, 1).normal(0, 0, 1).endVertex();
+                buffer.pos(maxX, minY, 0.5).tex(0, 1).normal(0, 0, 1).endVertex();
+                Tessellator.getInstance().draw();
 
                 //sides
-                buffer.pos(maxX, maxY, -0.5).tex(sideMinU, sideMinV).normal(0, 1, 0).endVertex();
-                buffer.pos(minX, maxY, -0.5).tex(sideMaxU, sideMinV).normal(0, 1, 0).endVertex();
-                buffer.pos(minX, maxY, 0.5).tex(sideMaxU, sideV).normal(0, 1, 0).endVertex();
-                buffer.pos(maxX, maxY, 0.5).tex(sideMinU, sideV).normal(0, 1, 0).endVertex();
-                buffer.pos(maxX, minY, 0.5).tex(sideMinU, sideMinV).normal(0, -1, 0).endVertex();
-                buffer.pos(minX, minY, 0.5).tex(sideMaxU, sideMinV).normal(0, -1, 0).endVertex();
-                buffer.pos(minX, minY, -0.5).tex(sideMaxU, sideV).normal(0, -1, 0).endVertex();
-                buffer.pos(maxX, minY, -0.5).tex(sideMinU, sideV).normal(0, -1, 0).endVertex();
-                buffer.pos(maxX, maxY, 0.5).tex(sideU, sideMinV).normal(-1, 0, 0).endVertex();
-                buffer.pos(maxX, minY, 0.5).tex(sideU, sideMaxV).normal(-1, 0, 0).endVertex();
-                buffer.pos(maxX, minY, -0.5).tex(sideMinU, sideMaxV).normal(-1, 0, 0).endVertex();
-                buffer.pos(maxX, maxY, -0.5).tex(sideMinU, sideMinV).normal(-1, 0, 0).endVertex();
-                buffer.pos(minX, maxY, -0.5).tex(sideU, sideMinV).normal(1, 0, 0).endVertex();
-                buffer.pos(minX, minY, -0.5).tex(sideU, sideMaxV).normal(1, 0, 0).endVertex();
-                buffer.pos(minX, minY, 0.5).tex(sideMinU, sideMaxV).normal(1, 0, 0).endVertex();
-                buffer.pos(minX, maxY, 0.5).tex(sideMinU, sideMinV).normal(1, 0, 0).endVertex();
+                GlStateManager.bindTexture(side);
+                buffer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
+                buffer.pos(maxX, maxY, -0.5).tex(0, 0).normal(0, 1, 0).endVertex();
+                buffer.pos(minX, maxY, -0.5).tex(1, 0).normal(0, 1, 0).endVertex();
+                buffer.pos(minX, maxY, 0.5).tex(1, 0.0625f).normal(0, 1, 0).endVertex();
+                buffer.pos(maxX, maxY, 0.5).tex(0, 0.0625f).normal(0, 1, 0).endVertex();
+                buffer.pos(maxX, minY, 0.5).tex(0, 0).normal(0, -1, 0).endVertex();
+                buffer.pos(minX, minY, 0.5).tex(1, 0).normal(0, -1, 0).endVertex();
+                buffer.pos(minX, minY, -0.5).tex(1, 0.0625f).normal(0, -1, 0).endVertex();
+                buffer.pos(maxX, minY, -0.5).tex(0, 0.0625f).normal(0, -1, 0).endVertex();
+                buffer.pos(maxX, maxY, 0.5).tex(0.0625f, 0).normal(-1, 0, 0).endVertex();
+                buffer.pos(maxX, minY, 0.5).tex(0.0625f, 1).normal(-1, 0, 0).endVertex();
+                buffer.pos(maxX, minY, -0.5).tex(0, 1).normal(-1, 0, 0).endVertex();
+                buffer.pos(maxX, maxY, -0.5).tex(0, 0).normal(-1, 0, 0).endVertex();
+                buffer.pos(minX, maxY, -0.5).tex(0.0625f, 0).normal(1, 0, 0).endVertex();
+                buffer.pos(minX, minY, -0.5).tex(0.0625f, 1).normal(1, 0, 0).endVertex();
+                buffer.pos(minX, minY, 0.5).tex(0, 1).normal(1, 0, 0).endVertex();
+                buffer.pos(minX, maxY, 0.5).tex(0, 0).normal(1, 0, 0).endVertex();
                 Tessellator.getInstance().draw();
             }
         }
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    protected int getGlTextureId(@Nonnull ResourceLocation location) {
+        @Nullable ITextureObject texture = renderManager.renderEngine.getTexture(location);
+        if(texture == null) {
+            texture = new SimpleTexture(location);
+            renderManager.renderEngine.loadTexture(location, texture);
+        }
+
+        return texture.getGlTextureId();
     }
 }
