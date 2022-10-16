@@ -64,7 +64,7 @@ public final class PSGRevampedTransformer implements IClassTransformer, Opcodes
                  * double f = 1d /(double)Hooks.getWidth(this.art);
                  * double f1 =1d /(double)Hooks.getHeight(this.art);
                  */
-                else if(isValidTransformer && method.name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "drawTexturedModalRect" : "")) {
+                else if(isValidTransformer && method.name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "drawTexturedModalRect" : "func_73729_b")) {
                     for(AbstractInsnNode insn : method.instructions.toArray()) {
                         if(insn.getOpcode() == GETSTATIC && ((FieldInsnNode)insn).name.equals("KZ_WIDTH")) {
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
