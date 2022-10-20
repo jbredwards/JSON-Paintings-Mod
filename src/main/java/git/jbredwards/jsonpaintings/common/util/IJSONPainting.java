@@ -1,4 +1,4 @@
-package git.jbredwards.jsonpaintings.common;
+package git.jbredwards.jsonpaintings.common.util;
 
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.util.ResourceLocation;
@@ -21,6 +21,9 @@ public interface IJSONPainting
     //nonnull if this uses special rendering
     @Nonnull ResourceLocation getSideTexture();
     void setSideTexture(@Nonnull ResourceLocation texture);
+
+    boolean isCreative();
+    void setCreative(boolean isCreative);
 
     //only paintings added through this mod have this value set to true
     boolean useSpecialRenderer();

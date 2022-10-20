@@ -23,7 +23,7 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
             final ClassNode classNode = new ClassNode();
             new ClassReader(basicClass).accept(classNode, 0);
             //implement interface
-            classNode.interfaces.add("git/jbredwards/jsonpaintings/common/IJSONPainting");
+            classNode.interfaces.add("git/jbredwards/jsonpaintings/common/util/IJSONPainting");
             //add new fields
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "frontTexture", "Lnet/minecraft/util/ResourceLocation;", null, null));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "backTexture", "Lnet/minecraft/util/ResourceLocation;", null, null));
@@ -32,6 +32,7 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "backOffsetY", "I", null, 0));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "sideOffsetX", "I", null, 0));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "sideOffsetY", "I", null, 0));
+            classNode.fields.add(new FieldNode(ACC_PRIVATE, "isCreative", "Z", null, false));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "useSpecialRenderer", "Z", null, false));
             /*
              * @ASMGenerated
@@ -114,6 +115,33 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
             setSideTexture.visitInsn(RETURN);
             setSideTexture.visitMaxs(2, 3);
             classNode.methods.add(setSideTexture);
+            /*
+             * @ASMGenerated
+             * public boolean isCreative()
+             * {
+             *     return this.isCreative;
+             * }
+             */
+            final MethodNode isCreative = new MethodNode(ACC_PUBLIC, "isCreative", "()Z", null, null);
+            isCreative.visitVarInsn(ALOAD, 0);
+            isCreative.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "isCreative", "Z");
+            isCreative.visitInsn(IRETURN);
+            isCreative.visitMaxs(1, 2);
+            classNode.methods.add(isCreative);
+            /*
+             * @ASMGenerated
+             * public void setCreative(boolean isCreative)
+             * {
+             *     this.isCreative = isCreative;
+             * }
+             */
+            final MethodNode setCreative = new MethodNode(ACC_PUBLIC, "setCreative", "(Z)V", null, null);
+            setCreative.visitVarInsn(ALOAD, 0);
+            setCreative.visitVarInsn(ILOAD, 1);
+            setCreative.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "isCreative", "Z");
+            setCreative.visitInsn(RETURN);
+            setCreative.visitMaxs(2, 3);
+            classNode.methods.add(setCreative);
             /*
              * @ASMGenerated
              * public boolean useSpecialRenderer()

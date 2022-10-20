@@ -23,6 +23,7 @@ public final class ASMHandler implements IFMLLoadingPlugin
     @Override
     public String[] getASMTransformerClass() {
         return new String[] {
+                "git.jbredwards.jsonpaintings.asm.transformer.EntityPaintingTransformer",
                 "git.jbredwards.jsonpaintings.asm.transformer.EnumArtTransformer",
                 //mod compat
                 "git.jbredwards.jsonpaintings.asm.transformer.PSGRevampedTransformer"

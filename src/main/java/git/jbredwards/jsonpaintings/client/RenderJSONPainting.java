@@ -1,6 +1,6 @@
 package git.jbredwards.jsonpaintings.client;
 
-import git.jbredwards.jsonpaintings.common.IJSONPainting;
+import git.jbredwards.jsonpaintings.common.util.IJSONPainting;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;

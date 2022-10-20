@@ -5,11 +5,16 @@ import com.google.common.eventbus.Subscribe;
 import git.jbredwards.jsonpaintings.asm.ASMHandler;
 import git.jbredwards.jsonpaintings.client.PaintingsResourcePack;
 import git.jbredwards.jsonpaintings.client.RenderJSONPainting;
-import git.jbredwards.jsonpaintings.common.JSONHandler;
+import git.jbredwards.jsonpaintings.common.EventHandler;
+import git.jbredwards.jsonpaintings.common.capability.IArtCapability;
+import git.jbredwards.jsonpaintings.common.util.JSONHandler;
 import net.minecraft.entity.item.EntityPainting;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.LoadController;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModMetadata;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -29,6 +34,8 @@ import java.util.Collections;
 @SuppressWarnings({"UnstableApiUsage", "unused"})
 public final class Main extends DummyModContainer
 {
+    public static boolean IS_PSG_INSTALLED;
+
     public Main() {
         super(new ModMetadata());
         final ModMetadata md = getMetadata();
@@ -59,6 +66,14 @@ public final class Main extends DummyModContainer
     @Subscribe
     public void clientPreInit(@Nonnull FMLPreInitializationEvent event) {
         RenderingRegistry.registerEntityRenderingHandler(EntityPainting.class, RenderJSONPainting::new);
+    }
+
+    @Subscribe
+    public void commonPreInit(@Nonnull FMLPreInitializationEvent event) {
+        CapabilityManager.INSTANCE.register(IArtCapability.class, IArtCapability.Storage.INSTANCE, IArtCapability.Impl::new);
+        MinecraftForge.EVENT_BUS.register(IArtCapability.class);
+        MinecraftForge.EVENT_BUS.register(EventHandler.class);
+        IS_PSG_INSTALLED = Loader.isModLoaded("paintingselgui");
     }
 
     @Subscribe

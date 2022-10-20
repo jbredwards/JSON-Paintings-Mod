@@ -1,4 +1,4 @@
-package git.jbredwards.jsonpaintings.common;
+package git.jbredwards.jsonpaintings.common.util;
 
 import com.google.gson.*;
 import git.jbredwards.jsonpaintings.Constants;

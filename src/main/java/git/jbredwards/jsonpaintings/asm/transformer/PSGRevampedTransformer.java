@@ -1,6 +1,6 @@
 package git.jbredwards.jsonpaintings.asm.transformer;
 
-import git.jbredwards.jsonpaintings.common.IJSONPainting;
+import git.jbredwards.jsonpaintings.common.util.IJSONPainting;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraft.util.ResourceLocation;

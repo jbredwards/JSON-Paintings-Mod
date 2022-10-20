@@ -10,5 +10,5 @@ import javax.annotation.Nonnull;
 public final class Constants
 {
     @Nonnull
-    public static final String MODID = "jsonpaintings", NAME = "JSON Paintings", VERSION = "1.0";
+    public static final String MODID = "jsonpaintings", NAME = "JSON Paintings", VERSION = "1.1";
 }
