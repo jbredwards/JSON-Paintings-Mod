@@ -65,7 +65,7 @@ public final class EventHandler
     }
 
     @Nonnull
-    static EntityPainting.EnumArt getRandomArt(@Nonnull EntityPainting painting, @Nonnull EntityPlayer player, @Nonnull EnumFacing facing) {
+    public static EntityPainting.EnumArt getRandomArt(@Nonnull EntityPainting painting, @Nonnull EntityPlayer player, @Nonnull EnumFacing facing) {
         final List<Pair<EntityPainting.EnumArt, Integer>> validArt = new ArrayList<>();
         final IntegerHolder maxSize = new IntegerHolder();
 
@@ -85,7 +85,7 @@ public final class EventHandler
         //this would be wack
         if(validArt.size() == 0) throw new IllegalStateException(
                 "Attempted to place painting entity with no valid art values! " +
-                "Please ensure there is at least one art type with \"isCreative\" set to false."
+                "Please ensure there is at least one 1x1 art type with \"isCreative\" set to false."
         );
 
         validArt.removeIf(pair -> pair.getValue() < maxSize.value);
@@ -98,6 +98,6 @@ public final class EventHandler
         final ItemStack stack = event.getItemStack();
         final @Nullable IArtCapability cap = IArtCapability.get(stack);
         if(cap != null && cap.hasArt())
-            event.getToolTip().add(I18n.format("jsonpaintings.itemTooltip", cap.getArt().title));
+            event.getToolTip().add(1, I18n.format("jsonpaintings.itemTooltip", cap.getArt().title));
     }
 }

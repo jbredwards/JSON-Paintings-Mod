@@ -1,0 +1,12 @@
+jsonpaintings.itemTooltip=%s
+
+//Waila Body Info
+jsonpaintings.wailaExclusive=§6Exclusive: §7not obtainable from cycling paintings
+jsonpaintings.wailaMotive=%s
+jsonpaintings.wailaSneakToCapture=§2Sneak while punching to capture
+
+//Waila Options
+jsonpaintings=JSON Paintings
+option.showExclusive=Snow Exclusive
+option.showMotive=Snow Motive
+option.showSneakToCapture=Snow Sneak to Capture

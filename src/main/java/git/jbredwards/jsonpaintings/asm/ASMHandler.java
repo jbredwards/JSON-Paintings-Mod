@@ -26,7 +26,8 @@ public final class ASMHandler implements IFMLLoadingPlugin
                 "git.jbredwards.jsonpaintings.asm.transformer.EntityPaintingTransformer",
                 "git.jbredwards.jsonpaintings.asm.transformer.EnumArtTransformer",
                 //mod compat
-                "git.jbredwards.jsonpaintings.asm.transformer.PSGRevampedTransformer"
+                "git.jbredwards.jsonpaintings.asm.transformer.PSGRevampedClientTransformer",
+                "git.jbredwards.jsonpaintings.asm.transformer.PSGRevampedServerTransformer"
         };
     }
 

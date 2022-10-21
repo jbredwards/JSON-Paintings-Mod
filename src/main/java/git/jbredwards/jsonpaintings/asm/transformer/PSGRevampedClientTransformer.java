@@ -18,7 +18,7 @@ import javax.annotation.Nonnull;
  *
  */
 @SuppressWarnings("unused")
-public final class PSGRevampedTransformer implements IClassTransformer, Opcodes
+public final class PSGRevampedClientTransformer implements IClassTransformer, Opcodes
 {
     @Nonnull
     @Override
@@ -47,7 +47,7 @@ public final class PSGRevampedTransformer implements IClassTransformer, Opcodes
                         if(insn.getOpcode() == GETSTATIC && ((FieldInsnNode)insn).name.equals("TEXTURE")) {
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
                             method.instructions.insertBefore(insn, new FieldInsnNode(GETFIELD, "com/mcf/davidee/paintinggui/gui/PaintingButton", "art", "Lnet/minecraft/entity/item/EntityPainting$EnumArt;"));
-                            method.instructions.insert(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/jsonpaintings/asm/transformer/PSGRevampedTransformer$Hooks", "getTexture", "(Lnet/minecraft/entity/item/EntityPainting$EnumArt;Lnet/minecraft/util/ResourceLocation;)Lnet/minecraft/util/ResourceLocation;", false));
+                            method.instructions.insert(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/jsonpaintings/asm/transformer/PSGRevampedClientTransformer$Hooks", "getTexture", "(Lnet/minecraft/entity/item/EntityPainting$EnumArt;Lnet/minecraft/util/ResourceLocation;)Lnet/minecraft/util/ResourceLocation;", false));
                             isValidTransformer = true;
                             break;
                         }
@@ -61,22 +61,20 @@ public final class PSGRevampedTransformer implements IClassTransformer, Opcodes
 		         *
 		         * New code:
 		         * //account for custom width & height
-                 * double f = 1d /(double)Hooks.getWidth(this.art);
-                 * double f1 =1d /(double)Hooks.getHeight(this.art);
+                 * double f = 1d /(double)Hooks.getWidth(this.art, KZ_WIDTH);
+                 * double f1 =1d /(double)Hooks.getHeight(this.art, KZ_HEIGHT);
                  */
                 else if(isValidTransformer && method.name.equals(FMLLaunchHandler.isDeobfuscatedEnvironment() ? "drawTexturedModalRect" : "func_73729_b")) {
                     for(AbstractInsnNode insn : method.instructions.toArray()) {
                         if(insn.getOpcode() == GETSTATIC && ((FieldInsnNode)insn).name.equals("KZ_WIDTH")) {
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
                             method.instructions.insertBefore(insn, new FieldInsnNode(GETFIELD, "com/mcf/davidee/paintinggui/gui/PaintingButton", "art", "Lnet/minecraft/entity/item/EntityPainting$EnumArt;"));
-                            method.instructions.insertBefore(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/jsonpaintings/asm/transformer/PSGRevampedTransformer$Hooks", "getWidth", "(Lnet/minecraft/entity/item/EntityPainting$EnumArt;)I", false));
-                            method.instructions.remove(insn);
+                            method.instructions.insert(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/jsonpaintings/asm/transformer/PSGRevampedClientTransformer$Hooks", "getWidth", "(Lnet/minecraft/entity/item/EntityPainting$EnumArt;I)I", false));
                         }
                         else if(insn.getOpcode() == GETSTATIC && ((FieldInsnNode)insn).name.equals("KZ_HEIGHT")) {
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
                             method.instructions.insertBefore(insn, new FieldInsnNode(GETFIELD, "com/mcf/davidee/paintinggui/gui/PaintingButton", "art", "Lnet/minecraft/entity/item/EntityPainting$EnumArt;"));
-                            method.instructions.insertBefore(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/jsonpaintings/asm/transformer/PSGRevampedTransformer$Hooks", "getHeight", "(Lnet/minecraft/entity/item/EntityPainting$EnumArt;)I", false));
-                            method.instructions.remove(insn);
+                            method.instructions.insert(insn, new MethodInsnNode(INVOKESTATIC, "git/jbredwards/jsonpaintings/asm/transformer/PSGRevampedClientTransformer$Hooks", "getHeight", "(Lnet/minecraft/entity/item/EntityPainting$EnumArt;I)I", false));
                             break methods;
                         }
                     }
@@ -100,12 +98,12 @@ public final class PSGRevampedTransformer implements IClassTransformer, Opcodes
             return painting.useSpecialRenderer() ? painting.getFrontTexture() : defaultTexture;
         }
 
-        public static int getWidth(@Nonnull EntityPainting.EnumArt art) {
-            return IJSONPainting.from(art).useSpecialRenderer() ? art.sizeX : 256;
+        public static int getWidth(@Nonnull EntityPainting.EnumArt art, int defaultWidth) {
+            return IJSONPainting.from(art).useSpecialRenderer() ? art.sizeX : defaultWidth;
         }
 
-        public static int getHeight(@Nonnull EntityPainting.EnumArt art) {
-            return IJSONPainting.from(art).useSpecialRenderer() ? art.sizeY : 256;
+        public static int getHeight(@Nonnull EntityPainting.EnumArt art, int defaultHeight) {
+            return IJSONPainting.from(art).useSpecialRenderer() ? art.sizeY : defaultHeight;
         }
     }
 }

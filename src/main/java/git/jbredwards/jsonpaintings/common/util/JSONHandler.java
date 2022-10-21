@@ -3,14 +3,11 @@ package git.jbredwards.jsonpaintings.common.util;
 import com.google.gson.*;
 import git.jbredwards.jsonpaintings.Constants;
 import net.minecraft.entity.item.EntityPainting;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.nbt.NBTException;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.fml.common.Loader;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.Validate;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -48,13 +45,17 @@ public final class JSONHandler
     }
 
     //reads each mod
-    public static void readMods() throws IOException {
+    public static void readMods() {
         for(String modId : Loader.instance().getIndexedModList().keySet()) {
             final @Nullable InputStream file = Loader.class.getResourceAsStream(String.format("/assets/%s/paintings/paintings.json", modId));
             if(file != null) {
-                ArtDeserializer.INSTANCE.modName = modId;
-                ArtDeserializer.INSTANCE.isModded = true;
-                GSON.fromJson(IOUtils.toString(file, Charset.defaultCharset()), EntityPainting.EnumArt[].class);
+                try {
+                    ArtDeserializer.INSTANCE.modName = modId;
+                    ArtDeserializer.INSTANCE.isModded = true;
+                    GSON.fromJson(IOUtils.toString(file, Charset.defaultCharset()), EntityPainting.EnumArt[].class);
+                }
+                //catch here as to not skip the other paintings
+                catch(IOException | RuntimeException e) { e.printStackTrace(); }
             }
         }
     }
@@ -66,76 +67,79 @@ public final class JSONHandler
         String modName;
         boolean isModded;
 
-        @Nullable
+        @Nonnull
         @Override
-        public EntityPainting.EnumArt deserialize(@Nonnull JsonElement json, @Nonnull Type typeOfT, @Nonnull JsonDeserializationContext context) throws JsonParseException {
-            try {
-                final NBTTagCompound nbt = JsonToNBT.getTagFromJson(json.toString());
-                final String motive = nbt.getString("motive");
-                if(!motive.isEmpty()) {
-                    //look for existing painting to override
-                    @Nullable EntityPainting.EnumArt art = null;
-                    for(EntityPainting.EnumArt artIn : EntityPainting.EnumArt.values()) {
-                        if(artIn.title.equals(motive)) {
-                            art = artIn;
-                            art.offsetX = 0;
-                            art.offsetY = 0;
-                            //override width, this is not recommended
-                            if(nbt.hasKey("width", NBT.TAG_ANY_NUMERIC))
-                                art.sizeX = Math.max(nbt.getInteger("width") << 4, 16);
-                            //override height, this is not recommended
-                            if(nbt.hasKey("height", NBT.TAG_ANY_NUMERIC))
-                                art.sizeY = Math.max(nbt.getInteger("height") << 4, 16);
+        public EntityPainting.EnumArt deserialize(@Nonnull JsonElement jsonIn, @Nonnull Type typeOfT, @Nonnull JsonDeserializationContext context) throws JsonParseException {
+            final JsonObject json = jsonIn.getAsJsonObject();
+            Validate.isTrue(json.has("motive"), "Cannot create painting without motive!");
 
-                            break;
-                        }
-                    }
+            final String motive = json.get("motive").getAsString();
+            //look for existing painting to override
+            @Nullable EntityPainting.EnumArt art = null;
+            for(EntityPainting.EnumArt artIn : EntityPainting.EnumArt.values()) {
+                if(artIn.title.equals(motive)) {
+                    art = artIn;
+                    art.offsetX = 0;
+                    art.offsetY = 0;
+                    //override width, this is not recommended
+                    if(json.has("width")) art.sizeX = Math.max(json.get("width").getAsInt() << 4, 16);
+                    //override height, this is not recommended
+                    if(json.has("height")) art.sizeY = Math.max(json.get("height").getAsInt() << 4, 16);
 
-                    //create new painting if it's not an override
-                    if(art == null) art = EnumHelper.addArt(
-                            "JSON_PAINTINGS_GENERATED_ID" + paintingsCreated++, motive,
-                            Math.max(nbt.getInteger("width") << 4, 16),
-                            Math.max(nbt.getInteger("height") << 4, 16), 0, 0);
-
-                    //should never pass, but exists cause EnumHelper method is nullable
-                    if(art == null) {
-                        paintingsCreated--;
-                        throw new IllegalArgumentException(
-                                "A critical error has occurred while creating painting with the name: " + motive);
-                    }
-
-                    //assign texture
-                    final NBTTagCompound textures = nbt.getCompoundTag("textures");
-                    final IJSONPainting painting = IJSONPainting.from(art);
-                    painting.setFrontTexture(textures.hasKey("front", NBT.TAG_STRING)
-                            ? buildLocation(textures.getString("front"))
-                            : buildLocation(modName + ":" + (isModded
-                                    ? "paintings/" + motive.toLowerCase()
-                                    : motive.toLowerCase())));
-
-                    //assign back texture
-                    painting.setBackTexture(textures.hasKey("back", NBT.TAG_STRING)
-                            ? buildLocation(textures.getString("back"))
-                            : DEFAULT_BACK_TEXTURE);
-
-                    //assign side texture
-                    painting.setSideTexture(textures.hasKey("side", NBT.TAG_STRING)
-                            ? buildLocation(textures.getString("side"))
-                            : painting.getBackTexture());
-
-                    //fix server issue with painting title sizes
-                    if(motive.length() > EntityPainting.EnumArt.MAX_NAME_LENGTH)
-                        EntityPainting.EnumArt.MAX_NAME_LENGTH = motive.length();
-
-                    painting.setUseSpecialRenderer(true);
-                    return art;
+                    break;
                 }
-
-                else System.out.println("JSON Paintings: A painting has been skipped! Missing name!");
-                return null;
             }
-            //likely a bad json
-            catch (NBTException e) { throw new JsonParseException(e); }
+
+            //create new painting if it's not an override
+            if(art == null) art = EnumHelper.addArt(
+                    "JSON_PAINTINGS_GENERATED_ID" + paintingsCreated++, motive,
+                    json.has("width") ? Math.max(json.get("width").getAsInt() << 4, 16) : 16,
+                    json.has("height") ? Math.max(json.get("height").getAsInt() << 4, 16) : 16, 0, 0);
+
+            //should never pass, but exists cause EnumHelper method is nullable
+            if(art == null) {
+                paintingsCreated--;
+                throw new IllegalArgumentException(
+                        "A critical error has occurred while creating painting with the motive: " + motive);
+            }
+
+            //assign textures
+            final IJSONPainting painting = IJSONPainting.from(art);
+            if(json.has("textures")) {
+                final JsonObject textures = json.getAsJsonObject("textures");
+                painting.setFrontTexture(textures.has("front")
+                        ? buildLocation(textures.get("front").getAsString())
+                        : buildLocation(modName + ":" + (isModded
+                                ? "paintings/" + motive.toLowerCase()
+                                : motive.toLowerCase())));
+
+                //assign back texture
+                painting.setBackTexture(textures.has("back")
+                        ? buildLocation(textures.get("back").getAsString())
+                        : DEFAULT_BACK_TEXTURE);
+
+                //assign side texture
+                painting.setSideTexture(textures.has("side")
+                        ? buildLocation(textures.get("side").getAsString())
+                        : painting.getBackTexture());
+            }
+
+            //assign default textures
+            else {
+                painting.setFrontTexture(buildLocation(modName + ":" + (isModded
+                        ? "paintings/" + motive.toLowerCase()
+                        : motive.toLowerCase())));
+                painting.setBackTexture(DEFAULT_BACK_TEXTURE);
+                painting.setSideTexture(DEFAULT_BACK_TEXTURE);
+            }
+
+            //fix server issue with painting title sizes
+            if(motive.length() > EntityPainting.EnumArt.MAX_NAME_LENGTH)
+                EntityPainting.EnumArt.MAX_NAME_LENGTH = motive.length();
+
+            if(json.has("isCreative")) painting.setCreative(json.get("isCreative").getAsBoolean());
+            painting.setUseSpecialRenderer(true);
+            return art;
         }
 
         @Nonnull
