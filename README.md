@@ -1,14 +1,6 @@
 # JSON-Paintings-Mod
 A minecraft mod that allows custom paintings to be easily added through a json file!
 
--Doesn't add any new painting entities or painting type handlers, but rather expands on vanilla's system, which means that this mod will work nicely with all other mods that don't override how paintings work!
-
--Paintings added through this mod use their own textures instead of being stuck to using vanilla's painting texture atlas!
-
--Allows paintings added through this mod to have custom back and side textures!
-
--Can override paintings! This could be used for example to give certain vanilla paintings custom back or side textures that match the front.
-
 ---
 
 ### Info for Players and Modpack Developers
@@ -67,6 +59,7 @@ The following is a summery which goes over the possible values and customization
         }
         (optional) "width":  The amount of blocks along the x-axis this occupies, defaults to 1.
         (optional) "height": The amount of blocks along the y-axis this occupies, defaults to 1.
+        (optional) "isCreative": True if players in survival cannot get this by cycling paintings, defaults to false
     }
 ]
 ```
