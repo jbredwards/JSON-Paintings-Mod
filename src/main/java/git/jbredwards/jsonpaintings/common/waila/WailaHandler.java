@@ -33,7 +33,7 @@ public final class WailaHandler implements IWailaPlugin
                     currentTip.add(I18n.translateToLocalFormatted("jsonpaintings.wailaMotive", art.title));
 
                 currentTip.add("");
-                if(!accessor.getPlayer().isCreative()) {
+                if(!accessor.getPlayer().isCreative() && !accessor.getPlayer().isSpectator()) {
                     if(config.getConfig("showSneakToCapture"))
                         currentTip.add(I18n.translateToLocal("jsonpaintings.wailaSneakToCapture"));
 

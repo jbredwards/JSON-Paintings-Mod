@@ -25,6 +25,14 @@ public interface IJSONPainting
     boolean isCreative();
     void setCreative(boolean isCreative);
 
+    //if the back texture is specified, assume it has proper proportions
+    boolean hasBackTexture();
+    void setHasBackTexture(boolean hasTexture);
+
+    //if the side texture is specified, assume it has proper proportions
+    boolean hasSideTexture();
+    void setHasSideTexture(boolean hasTexture);
+
     //only paintings added through this mod have this value set to true
     boolean useSpecialRenderer();
     void setUseSpecialRenderer(boolean useSpecialRenderer);

@@ -33,6 +33,8 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "sideOffsetX", "I", null, 0));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "sideOffsetY", "I", null, 0));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "isCreative", "Z", null, false));
+            classNode.fields.add(new FieldNode(ACC_PRIVATE, "hasBackTexture", "Z", null, false));
+            classNode.fields.add(new FieldNode(ACC_PRIVATE, "hasSideTexture", "Z", null, false));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "useSpecialRenderer", "Z", null, false));
             /*
              * @ASMGenerated
@@ -142,6 +144,60 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
             setCreative.visitInsn(RETURN);
             setCreative.visitMaxs(2, 3);
             classNode.methods.add(setCreative);
+            /*
+             * @ASMGenerated
+             * public boolean hasBackTexture()
+             * {
+             *     return this.hasBackTexture;
+             * }
+             */
+            final MethodNode hasBackTexture = new MethodNode(ACC_PUBLIC, "hasBackTexture", "()Z", null, null);
+            hasBackTexture.visitVarInsn(ALOAD, 0);
+            hasBackTexture.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "hasBackTexture", "Z");
+            hasBackTexture.visitInsn(IRETURN);
+            hasBackTexture.visitMaxs(1, 2);
+            classNode.methods.add(hasBackTexture);
+            /*
+             * @ASMGenerated
+             * public void setHasBackTexture(boolean hasTexture)
+             * {
+             *     this.hasBackTexture = hasTexture;
+             * }
+             */
+            final MethodNode setHasBackTexture = new MethodNode(ACC_PUBLIC, "setHasBackTexture", "(Z)V", null, null);
+            setHasBackTexture.visitVarInsn(ALOAD, 0);
+            setHasBackTexture.visitVarInsn(ILOAD, 1);
+            setHasBackTexture.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "hasBackTexture", "Z");
+            setHasBackTexture.visitInsn(RETURN);
+            setHasBackTexture.visitMaxs(2, 3);
+            classNode.methods.add(setHasBackTexture);
+            /*
+             * @ASMGenerated
+             * public boolean hasSideTexture()
+             * {
+             *     return this.hasSideTexture;
+             * }
+             */
+            final MethodNode hasSideTexture = new MethodNode(ACC_PUBLIC, "hasSideTexture", "()Z", null, null);
+            hasSideTexture.visitVarInsn(ALOAD, 0);
+            hasSideTexture.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "hasSideTexture", "Z");
+            hasSideTexture.visitInsn(IRETURN);
+            hasSideTexture.visitMaxs(1, 2);
+            classNode.methods.add(hasSideTexture);
+            /*
+             * @ASMGenerated
+             * public void setHasSideTexture(boolean hasTexture)
+             * {
+             *     this.hasSideTexture = hasTexture;
+             * }
+             */
+            final MethodNode setHasSideTexture = new MethodNode(ACC_PUBLIC, "setHasSideTexture", "(Z)V", null, null);
+            setHasSideTexture.visitVarInsn(ALOAD, 0);
+            setHasSideTexture.visitVarInsn(ILOAD, 1);
+            setHasSideTexture.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "hasSideTexture", "Z");
+            setHasSideTexture.visitInsn(RETURN);
+            setHasSideTexture.visitMaxs(2, 3);
+            classNode.methods.add(setHasSideTexture);
             /*
              * @ASMGenerated
              * public boolean useSpecialRenderer()

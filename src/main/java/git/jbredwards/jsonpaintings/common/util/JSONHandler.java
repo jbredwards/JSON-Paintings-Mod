@@ -1,5 +1,6 @@
 package git.jbredwards.jsonpaintings.common.util;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
 import git.jbredwards.jsonpaintings.Constants;
 import net.minecraft.entity.item.EntityPainting;
@@ -85,6 +86,10 @@ public final class JSONHandler
                     if(json.has("width")) art.sizeX = Math.max(json.get("width").getAsInt() << 4, 16);
                     //override height, this is not recommended
                     if(json.has("height")) art.sizeY = Math.max(json.get("height").getAsInt() << 4, 16);
+                    //reset misc json painting properties
+                    IJSONPainting.from(art).setCreative(false);
+                    IJSONPainting.from(art).setHasBackTexture(false);
+                    IJSONPainting.from(art).setHasSideTexture(false);
 
                     break;
                 }
@@ -107,21 +112,32 @@ public final class JSONHandler
             final IJSONPainting painting = IJSONPainting.from(art);
             if(json.has("textures")) {
                 final JsonObject textures = json.getAsJsonObject("textures");
-                painting.setFrontTexture(textures.has("front")
-                        ? buildLocation(textures.get("front").getAsString())
-                        : buildLocation(modName + ":" + (isModded
+                final String front = textures.has("front")
+                        ? textures.get("front").getAsString()
+                        : modName + ":" + (isModded
                                 ? "paintings/" + motive.toLowerCase()
-                                : motive.toLowerCase())));
+                                : motive.toLowerCase());
 
-                //assign back texture
-                painting.setBackTexture(textures.has("back")
-                        ? buildLocation(textures.get("back").getAsString())
-                        : DEFAULT_BACK_TEXTURE);
+                final String back;
+                if(!textures.has("back")) back = DEFAULT_BACK_TEXTURE.toString();
+                else {
+                    back = textures.get("back").getAsString();
+                    painting.setHasBackTexture(true);
+                    painting.setHasSideTexture(true);
+                }
 
-                //assign side texture
-                painting.setSideTexture(textures.has("side")
-                        ? buildLocation(textures.get("side").getAsString())
-                        : painting.getBackTexture());
+                final String side;
+                if(!textures.has("side")) side = back;
+                else {
+                    side = textures.get("side").getAsString();
+                    painting.setHasSideTexture(true);
+                }
+
+                //allow for texture locations to reference other textures (example -> "back": "#front")
+                final ImmutableMap<String, String> textureMap = ImmutableMap.of("front", front, "back", back, "side", side);
+                painting.setFrontTexture(buildLocation(front.charAt(0) == '#' ? textureMap.get(front.substring(1)) : front));
+                painting.setBackTexture(buildLocation(back.charAt(0) == '#' ? textureMap.get(back.substring(1)) : back));
+                painting.setSideTexture(buildLocation(side.charAt(0) == '#' ? textureMap.get(side.substring(1)) : side));
             }
 
             //assign default textures
