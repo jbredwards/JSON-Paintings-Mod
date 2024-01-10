@@ -1,6 +1,11 @@
-package git.jbredwards.jsonpaintings.asm.transformer;
+/*
+ * Copyright (c) 2024. jbredwards
+ * All rights reserved.
+ */
 
-import git.jbredwards.jsonpaintings.common.util.IJSONPainting;
+package git.jbredwards.jsonpaintings.mod.asm.transformer;
+
+import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.launchwrapper.IClassTransformer;
@@ -45,10 +50,10 @@ public final class PSGRevampedServerTransformer implements IClassTransformer, Op
                  * }
                  */
                 if(method.name.equals("onPaintingPlaced")) {
-                    for(AbstractInsnNode insn : method.instructions.toArray()) {
+                    for(final AbstractInsnNode insn : method.instructions.toArray()) {
                         if(insn.getOpcode() == INVOKESTATIC && ((MethodInsnNode)insn).name.equals("values")) {
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 3));
-                            ((MethodInsnNode)insn).owner = "git/jbredwards/jsonpaintings/asm/transformer/PSGRevampedServerTransformer$Hooks";
+                            ((MethodInsnNode)insn).owner = "git/jbredwards/jsonpaintings/mod/asm/transformer/PSGRevampedServerTransformer$Hooks";
                             ((MethodInsnNode)insn).desc = "(Lnet/minecraft/entity/player/EntityPlayer;)[Lnet/minecraft/entity/item/EntityPainting$EnumArt;";
                             break methods;
                         }

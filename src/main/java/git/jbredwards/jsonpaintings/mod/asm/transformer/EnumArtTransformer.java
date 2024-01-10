@@ -1,4 +1,9 @@
-package git.jbredwards.jsonpaintings.asm.transformer;
+/*
+ * Copyright (c) 2024. jbredwards
+ * All rights reserved.
+ */
+
+package git.jbredwards.jsonpaintings.mod.asm.transformer;
 
 import net.minecraft.launchwrapper.IClassTransformer;
 import org.objectweb.asm.ClassReader;
@@ -23,16 +28,19 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
             final ClassNode classNode = new ClassNode();
             new ClassReader(basicClass).accept(classNode, 0);
             //implement interface
-            classNode.interfaces.add("git/jbredwards/jsonpaintings/common/util/IJSONPainting");
+            classNode.interfaces.add("git/jbredwards/jsonpaintings/mod/common/util/IJSONPainting");
             //add new fields
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "frontTexture", "Lnet/minecraft/util/ResourceLocation;", null, null));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "backTexture", "Lnet/minecraft/util/ResourceLocation;", null, null));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "sideTexture", "Lnet/minecraft/util/ResourceLocation;", null, null));
+            classNode.fields.add(new FieldNode(ACC_PRIVATE, "modName", "Ljava/lang/String;", null, null));
+            classNode.fields.add(new FieldNode(ACC_PRIVATE, "rarity", "Lnet/minecraftforge/common/IRarity;", null, null));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "backOffsetX", "I", null, 0));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "backOffsetY", "I", null, 0));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "sideOffsetX", "I", null, 0));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "sideOffsetY", "I", null, 0));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "isCreative", "Z", null, false));
+            classNode.fields.add(new FieldNode(ACC_PRIVATE, "alwaysCapture", "Z", null, false));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "hasBackTexture", "Z", null, false));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "hasSideTexture", "Z", null, false));
             classNode.fields.add(new FieldNode(ACC_PRIVATE, "useSpecialRenderer", "Z", null, false));
@@ -119,6 +127,60 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
             classNode.methods.add(setSideTexture);
             /*
              * @ASMGenerated
+             * public String getModName()
+             * {
+             *     return this.modName;
+             * }
+             */
+            final MethodNode getModName = new MethodNode(ACC_PUBLIC, "getModName", "()Ljava/lang/String;", null, null);
+            getModName.visitVarInsn(ALOAD, 0);
+            getModName.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "modName", "Ljava/lang/String;");
+            getModName.visitInsn(ARETURN);
+            getModName.visitMaxs(1, 2);
+            classNode.methods.add(getModName);
+            /*
+             * @ASMGenerated
+             * public void setModName(String modName)
+             * {
+             *     this.modName = modName;
+             * }
+             */
+            final MethodNode setModName = new MethodNode(ACC_PUBLIC, "setModName", "(Ljava/lang/String;)V", null, null);
+            setModName.visitVarInsn(ALOAD, 0);
+            setModName.visitVarInsn(ALOAD, 1);
+            setModName.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "modName", "Ljava/lang/String;");
+            setModName.visitInsn(RETURN);
+            setModName.visitMaxs(2, 3);
+            classNode.methods.add(setModName);
+            /*
+             * @ASMGenerated
+             * public IRarity getRarity()
+             * {
+             *     return this.rarity;
+             * }
+             */
+            final MethodNode getRarity = new MethodNode(ACC_PUBLIC, "getRarity", "()Lnet/minecraftforge/common/IRarity;", null, null);
+            getRarity.visitVarInsn(ALOAD, 0);
+            getRarity.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "rarity", "Lnet/minecraftforge/common/IRarity;");
+            getRarity.visitInsn(ARETURN);
+            getRarity.visitMaxs(1, 2);
+            classNode.methods.add(getRarity);
+            /*
+             * @ASMGenerated
+             * public void setRarity(IRarity rarity)
+             * {
+             *     this.rarity = rarity;
+             * }
+             */
+            final MethodNode setRarity = new MethodNode(ACC_PUBLIC, "setRarity", "(Lnet/minecraftforge/common/IRarity;)V", null, null);
+            setRarity.visitVarInsn(ALOAD, 0);
+            setRarity.visitVarInsn(ALOAD, 1);
+            setRarity.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "rarity", "Lnet/minecraftforge/common/IRarity;");
+            setRarity.visitInsn(RETURN);
+            setRarity.visitMaxs(2, 3);
+            classNode.methods.add(setRarity);
+            /*
+             * @ASMGenerated
              * public boolean isCreative()
              * {
              *     return this.isCreative;
@@ -144,6 +206,33 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
             setCreative.visitInsn(RETURN);
             setCreative.visitMaxs(2, 3);
             classNode.methods.add(setCreative);
+            /*
+             * @ASMGenerated
+             * public boolean alwaysCapture()
+             * {
+             *     return this.alwaysCapture;
+             * }
+             */
+            final MethodNode alwaysCapture = new MethodNode(ACC_PUBLIC, "alwaysCapture", "()Z", null, null);
+            alwaysCapture.visitVarInsn(ALOAD, 0);
+            alwaysCapture.visitFieldInsn(GETFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "alwaysCapture", "Z");
+            alwaysCapture.visitInsn(IRETURN);
+            alwaysCapture.visitMaxs(1, 2);
+            classNode.methods.add(alwaysCapture);
+            /*
+             * @ASMGenerated
+             * public void setAlwaysCapture(boolean alwaysCapture)
+             * {
+             *     this.alwaysCapture = alwaysCapture;
+             * }
+             */
+            final MethodNode setAlwaysCapture = new MethodNode(ACC_PUBLIC, "setAlwaysCapture", "(Z)V", null, null);
+            setAlwaysCapture.visitVarInsn(ALOAD, 0);
+            setAlwaysCapture.visitVarInsn(ILOAD, 1);
+            setAlwaysCapture.visitFieldInsn(PUTFIELD, "net/minecraft/entity/item/EntityPainting$EnumArt", "alwaysCapture", "Z");
+            setAlwaysCapture.visitInsn(RETURN);
+            setAlwaysCapture.visitMaxs(2, 3);
+            classNode.methods.add(setAlwaysCapture);
             /*
              * @ASMGenerated
              * public boolean hasBackTexture()

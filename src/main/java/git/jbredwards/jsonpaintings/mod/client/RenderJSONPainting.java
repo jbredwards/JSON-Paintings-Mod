@@ -1,8 +1,14 @@
-package git.jbredwards.jsonpaintings.client;
+/*
+ * Copyright (c) 2024. jbredwards
+ * All rights reserved.
+ */
 
-import git.jbredwards.jsonpaintings.common.util.IJSONPainting;
+package git.jbredwards.jsonpaintings.mod.client;
+
+import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.RenderPainting;
@@ -25,10 +31,11 @@ import javax.annotation.Nullable;
 @SideOnly(Side.CLIENT)
 public class RenderJSONPainting extends RenderPainting
 {
+    public static boolean CALC_BRIGHTNESS = true;
     public RenderJSONPainting(@Nonnull RenderManager renderManagerIn) { super(renderManagerIn); }
 
     @Override
-    public void doRender(@Nonnull EntityPainting entity, double x, double y, double z, float entityYaw, float partialTicks) {
+    public void doRender(@Nonnull final EntityPainting entity, final double x, final double y, final double z, final float entityYaw, final float partialTicks) {
         final IJSONPainting painting = IJSONPainting.from(entity.art);
         if(!painting.useSpecialRenderer()) {
             super.doRender(entity, x, y, z, entityYaw, partialTicks);
@@ -60,7 +67,7 @@ public class RenderJSONPainting extends RenderPainting
         if(!renderOutlines) renderName(entity, x, y, z);
     }
 
-    protected void renderPainting(@Nonnull EntityPainting entity, @Nonnull IJSONPainting painting) {
+    protected void renderPainting(@Nonnull final EntityPainting entity, @Nonnull final IJSONPainting painting) {
         final int front = getGlTextureId(painting.getFrontTexture());
         final int back = getGlTextureId(painting.getBackTexture());
         final int side = getGlTextureId(painting.getSideTexture());
@@ -172,7 +179,7 @@ public class RenderJSONPainting extends RenderPainting
     }
 
     @SuppressWarnings("ConstantConditions")
-    protected int getGlTextureId(@Nonnull ResourceLocation location) {
+    protected int getGlTextureId(@Nonnull final ResourceLocation location) {
         @Nullable ITextureObject texture = renderManager.renderEngine.getTexture(location);
         if(texture == null) {
             texture = new SimpleTexture(location);
@@ -180,5 +187,11 @@ public class RenderJSONPainting extends RenderPainting
         }
 
         return texture.getGlTextureId();
+    }
+
+    @Override
+    public void setLightmap(@Nonnull final EntityPainting painting, final float x, final float y) {
+        if(CALC_BRIGHTNESS) super.setLightmap(painting, x, y);
+        else OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240, 240);
     }
 }

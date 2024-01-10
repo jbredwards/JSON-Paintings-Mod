@@ -1,22 +1,23 @@
-package git.jbredwards.jsonpaintings.common;
+/*
+ * Copyright (c) 2024. jbredwards
+ * All rights reserved.
+ */
 
-import git.jbredwards.jsonpaintings.Main;
-import git.jbredwards.jsonpaintings.common.capability.IArtCapability;
-import git.jbredwards.jsonpaintings.common.util.IJSONPainting;
+package git.jbredwards.jsonpaintings.mod.common;
+
+import git.jbredwards.jsonpaintings.mod.JSONPaintings;
+import git.jbredwards.jsonpaintings.mod.common.capability.IArtCapability;
+import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
 import io.netty.util.internal.IntegerHolder;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -36,7 +37,7 @@ public final class EventHandler
         final ItemStack stack = event.getItemStack();
         final @Nullable IArtCapability cap = IArtCapability.get(stack);
 
-        if(cap != null && (!Main.IS_PSG_INSTALLED || cap.hasArt())) {
+        if(cap != null && (!JSONPaintings.IS_PSG_INSTALLED || cap.hasArt())) {
             final @Nullable EnumFacing facing = event.getFace();
             if(facing != null && facing.getAxis().isHorizontal()) {
                 final BlockPos offset = event.getPos().offset(facing);
@@ -90,14 +91,5 @@ public final class EventHandler
 
         validArt.removeIf(pair -> pair.getValue() < maxSize.value);
         return validArt.get(painting.world.rand.nextInt(validArt.size())).getKey();
-    }
-
-    @SideOnly(Side.CLIENT)
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    static void handleTooltip(@Nonnull ItemTooltipEvent event) {
-        final ItemStack stack = event.getItemStack();
-        final @Nullable IArtCapability cap = IArtCapability.get(stack);
-        if(cap != null && cap.hasArt())
-            event.getToolTip().add(1, I18n.format("jsonpaintings.itemTooltip", cap.getArt().title));
     }
 }

@@ -1,4 +1,9 @@
-package git.jbredwards.jsonpaintings.asm;
+/*
+ * Copyright (c) 2024. jbredwards
+ * All rights reserved.
+ */
+
+package git.jbredwards.jsonpaintings.mod.asm;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
@@ -23,17 +28,19 @@ public final class ASMHandler implements IFMLLoadingPlugin
     @Override
     public String[] getASMTransformerClass() {
         return new String[] {
-                "git.jbredwards.jsonpaintings.asm.transformer.EntityPaintingTransformer",
-                "git.jbredwards.jsonpaintings.asm.transformer.EnumArtTransformer",
+                "git.jbredwards.jsonpaintings.mod.asm.transformer.EntityPaintingTransformer",
+                "git.jbredwards.jsonpaintings.mod.asm.transformer.EnumArtTransformer",
+                "git.jbredwards.jsonpaintings.mod.asm.transformer.ItemTransformer",
                 //mod compat
-                "git.jbredwards.jsonpaintings.asm.transformer.PSGRevampedClientTransformer",
-                "git.jbredwards.jsonpaintings.asm.transformer.PSGRevampedServerTransformer"
+                "git.jbredwards.jsonpaintings.mod.asm.transformer.PSGRevampedClientTransformer",
+                "git.jbredwards.jsonpaintings.mod.asm.transformer.PSGRevampedServerTransformer",
+                "git.jbredwards.jsonpaintings.mod.asm.transformer.TwilightForestTransformer"
         };
     }
 
     @Nonnull
     @Override
-    public String getModContainerClass() { return "git.jbredwards.jsonpaintings.Main"; }
+    public String getModContainerClass() { return "git.jbredwards.jsonpaintings.mod.JSONPaintings"; }
 
     @Override
     public void injectData(@Nonnull Map<String, Object> data) { modLocation = (File)data.get("coremodLocation"); }

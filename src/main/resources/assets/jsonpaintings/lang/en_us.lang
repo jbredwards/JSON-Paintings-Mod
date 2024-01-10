@@ -1,11 +1,19 @@
-jsonpaintings.itemTooltip=%s
+jsonpaintings.itemTooltip=%s [%dx%d]
 
-//Waila Body Info
-jsonpaintings.wailaExclusive=§6Exclusive: §7not obtainable from cycling paintings
+#Command
+jsonpaintings.command.dedicatedServer=Paintings on a dedicated server must be reloaded by restarting the server
+jsonpaintings.command.playerExceeded=Cannot reload paintings with more than 1 player online
+jsonpaintings.command.removedPainting=It's been detected that you're trying to remove 1 or more paintings. This cannot be done without a game restart, so the reload has been canceled
+jsonpaintings.command.success=Successfully reloaded paintings
+jsonpaintings.command.usage=/jsonpaintings reload
+jsonpaintings.command.usage.trimmed=/paintings reload
+
+#Waila Body Info
+jsonpaintings.wailaExclusive=§dExclusive: §7not obtainable from cycling paintings
 jsonpaintings.wailaMotive=%s
-jsonpaintings.wailaSneakToCapture=§2Sneak while punching to capture
+jsonpaintings.wailaSneakToCapture=Sneak while punching to capture
 
-//Waila Options
+#Waila Options
 jsonpaintings=JSON Paintings
 option.showExclusive=Snow Exclusive
 option.showMotive=Snow Motive

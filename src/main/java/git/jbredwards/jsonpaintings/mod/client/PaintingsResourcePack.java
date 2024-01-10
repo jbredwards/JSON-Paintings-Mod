@@ -1,6 +1,11 @@
-package git.jbredwards.jsonpaintings.client;
+/*
+ * Copyright (c) 2024. jbredwards
+ * All rights reserved.
+ */
 
-import git.jbredwards.jsonpaintings.Constants;
+package git.jbredwards.jsonpaintings.mod.client;
+
+import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import net.minecraft.client.resources.FolderResourcePack;
 import net.minecraft.client.resources.IResourcePack;
 import net.minecraft.client.resources.data.IMetadataSection;
@@ -40,13 +45,13 @@ public class PaintingsResourcePack implements IResourcePack
             @Nonnull
             @Override
             public InputStream getInputStream(@Nonnull ResourceLocation location) throws IOException {
-                if(!location.getNamespace().equals(Constants.MODID)) throw new FileNotFoundException("Invalid modid");
+                if(!location.getNamespace().equals(JSONPaintings.MODID)) throw new FileNotFoundException("Invalid modid");
                 else return getInputStreamByName(location.getPath());
             }
 
             @Override
             public boolean resourceExists(@Nonnull ResourceLocation location) {
-                return location.getNamespace().equals(Constants.MODID) && hasResourceName(location.getPath());
+                return location.getNamespace().equals(JSONPaintings.MODID) && hasResourceName(location.getPath());
             }
         };
     }

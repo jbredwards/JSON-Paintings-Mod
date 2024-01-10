@@ -11,7 +11,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'maven-publish'
 
-version = 'v1.2-mc1.12.2'
+version = 'v1.3.0-mc1.12.2'
 group = 'git.jbredwards.jsonpaintings' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'JSON-Paintings'
 sourceCompatibility  = targetCompatibility = '1.8'
@@ -24,11 +24,17 @@ minecraft {
 }
 
 repositories {
+    maven { url 'https://dvs1.progwml6.com/files/maven' }
     maven { url 'https://jitpack.io' }
+    maven { url 'https://maven.covers1624.net' }
+    maven { url 'https://maven.tterrag.com' }
 }
 
 dependencies {
+    deobfCompile 'cofh:RedstoneFlux:1.12-2.0.1.2:universal' // for TOP
     deobfCompile 'com.github.TehNut-Mods:HWYLA:1.12-SNAPSHOT'
+    deobfCompile 'mcjty.theoneprobe:TheOneProbe-1.12:1.12-1.4.19-11'
+    deobfCompile 'mezz.jei:jei_1.12.2:4.15.0.276'
 }
 
 task deobfJar(type: Jar) {
@@ -60,7 +66,7 @@ publishing {
 jar { 
     manifest { 
         attributes([
-            'FMLCorePlugin': 'git.jbredwards.jsonpaintings.asm.ASMHandler',
+            'FMLCorePlugin': 'git.jbredwards.jsonpaintings.mod.asm.ASMHandler',
             'FMLCorePluginContainsFMLMod': 'true',
             'FMLAT': 'jsonpaintings_at.cfg'
         ])
@@ -68,5 +74,5 @@ jar {
 }
 
 //for applying asm with intellij
-runClient { jvmArgs '-Dfml.coreMods.load=git.jbredwards.jsonpaintings.asm.ASMHandler' }
-runServer { jvmArgs '-Dfml.coreMods.load=git.jbredwards.jsonpaintings.asm.ASMHandler' }
+runClient { jvmArgs '-Dfml.coreMods.load=git.jbredwards.jsonpaintings.mod.asm.ASMHandler' }
+runServer { jvmArgs '-Dfml.coreMods.load=git.jbredwards.jsonpaintings.mod.asm.ASMHandler' }
