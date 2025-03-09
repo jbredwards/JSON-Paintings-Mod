@@ -1,31 +1,39 @@
 /*
- * Copyright (c) 2024. jbredwards
+ * Copyright (c) 2025. jbredwards
  * All rights reserved.
  */
 
 package git.jbredwards.jsonpaintings.mod.common.item;
 
+import com.mcf.davidee.paintinggui.handler.PlacePaintingEventHandler;
+import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import git.jbredwards.jsonpaintings.mod.common.capability.IArtCapability;
 import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
 import git.jbredwards.jsonpaintings.mod.common.util.JSONHandler;
+import io.netty.util.internal.IntegerHolder;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityHanging;
 import net.minecraft.entity.item.EntityPainting;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemHangingEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.common.IRarity;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -40,15 +48,86 @@ public class ItemPainting extends ItemHangingEntity
 {
     public ItemPainting(@Nonnull final Class<? extends EntityHanging> entityClass) { super(entityClass); }
 
+    @Nullable
+    public static EntityPainting.EnumArt getRandomArt(@Nonnull EntityPainting painting, @Nonnull EntityPlayer player, @Nonnull EnumFacing facing) {
+        final List<Pair<EntityPainting.EnumArt, Integer>> validArt = new ArrayList<>(EntityPainting.EnumArt.values().length);
+        final IntegerHolder maxSize = new IntegerHolder();
+
+        for(EntityPainting.EnumArt art : EntityPainting.EnumArt.values()) {
+            if(!player.isCreative() && IJSONPainting.from(art).isCreative()) continue;
+
+            painting.art = art;
+            painting.updateFacingWithBoundingBox(facing);
+
+            if(painting.onValidSurface()) {
+                final int size = art.sizeX * art.sizeY;
+                validArt.add(Pair.of(art, size));
+                if(size > maxSize.value) maxSize.value = size;
+            }
+        }
+
+        validArt.removeIf(pair -> pair.getValue() < maxSize.value);
+        return validArt.isEmpty() ? null : validArt.get(painting.world.rand.nextInt(validArt.size())).getKey();
+    }
+
+    @Nonnull
+    @Override
+    public EnumActionResult onItemUse(@Nonnull final EntityPlayer player, @Nonnull final World worldIn, @Nonnull final BlockPos pos, @Nonnull final EnumHand hand, @Nonnull final EnumFacing facing, final float hitX, final float hitY, final float hitZ) {
+        @Nonnull final ItemStack stack = player.getHeldItem(hand);
+        @Nullable final IArtCapability cap = IArtCapability.get(stack);
+
+        if(cap != null) {
+            @Nullable final EntityPainting.EnumArt art = cap.getArt();
+            if((art != null || !JSONPaintings.IS_PSG_INSTALLED) && facing.getAxis().isHorizontal()) {
+                @Nonnull final BlockPos offset = pos.offset(facing);
+                if(player.canPlayerEdit(offset, facing, stack)) {
+                    @Nonnull final EntityPainting painting = new EntityPainting(worldIn);
+                    painting.setPosition(offset.getX(), offset.getY(), offset.getZ());
+
+                    if(art != null) painting.art = art;
+                    else { // get random valid mantle
+                        @Nullable final EntityPainting.EnumArt randomArt = getRandomArt(painting, player, facing);
+                        if(randomArt != null) painting.art = randomArt;
+                        else { // no mantle can be placed
+                            return EnumActionResult.PASS;
+                        }
+                    }
+
+                    painting.updateFacingWithBoundingBox(facing);
+                    if(painting.onValidSurface()) {
+                        if(!painting.world.isRemote) {
+                            if(!player.isCreative()) stack.shrink(1);
+                            painting.world.spawnEntity(painting);
+                            painting.playPlaceSound();
+                        }
+
+                        return EnumActionResult.SUCCESS;
+                    }
+
+                    else return EnumActionResult.PASS;
+                }
+            }
+        }
+
+        // Painting Selection GUI's event handler is removed at runtime to prevent bypassing block interactions, this re-implements it
+        if(JSONPaintings.IS_PSG_INSTALLED) {
+            @Nonnull final PlayerInteractEvent.RightClickBlock event = new PlayerInteractEvent.RightClickBlock(player, hand, pos, facing, new Vec3d(hitX, hitY, hitZ));
+            new PlacePaintingEventHandler().onPaintingPlaced(event);
+            if(event.isCanceled()) return event.getCancellationResult();
+        }
+
+        return EnumActionResult.PASS;
+    }
+
     @Override
     public void getSubItems(@Nonnull final CreativeTabs tab, @Nonnull final NonNullList<ItemStack> items) {
         if(isInCreativeTab(tab)) {
             items.add(new ItemStack(this));
 
-            //add all painting types to the creative tab
-            for(final EntityPainting.EnumArt art : EntityPainting.EnumArt.values()) {
-                final ItemStack stack = new ItemStack(this);
-                final IArtCapability cap = IArtCapability.get(stack);
+            // add all painting types to the creative tab
+            for(@Nonnull final EntityPainting.EnumArt art : EntityPainting.EnumArt.values()) {
+                @Nonnull final ItemStack stack = new ItemStack(this);
+                @Nullable final IArtCapability cap = IArtCapability.get(stack);
 
                 if(cap != null) {
                     cap.setArt(art);
@@ -61,27 +140,22 @@ public class ItemPainting extends ItemHangingEntity
     @SideOnly(Side.CLIENT)
     @Override
     public void addInformation(@Nonnull final ItemStack stack, @Nullable final World worldIn, @Nonnull final List<String> tooltip, @Nonnull final ITooltipFlag flagIn) {
-        @Nullable final IArtCapability cap = IArtCapability.get(stack);
-        if(cap != null && cap.hasArt()) tooltip.add(I18n.format("jsonpaintings.itemTooltip", cap.getArt().title, cap.getArt().sizeX >> 4, cap.getArt().sizeY >> 4));
+        IArtCapability.getOptional(stack).ifPresent(art -> tooltip.add(I18n.format("jsonpaintings.itemTooltip", I18n.format(art.title), art.sizeX >> 4, art.sizeY >> 4)));
     }
 
     @Nullable
     @Override
-    public String getCreatorModId(@Nonnull final ItemStack itemStack) {
-        @Nullable final ResourceLocation location = getRegistryName();
-        if(location == null) return null;
-
-        @Nullable final IArtCapability cap = IArtCapability.get(itemStack);
-        return cap != null && cap.hasArt() ? JSONHandler.MODID_LOOKUP.getOrDefault(cap.getArt(), ForgeVersion.MOD_ID) : location.getNamespace();
+    public String getCreatorModId(@Nonnull final ItemStack stack) {
+        @Nullable final ResourceLocation loc = getRegistryName();
+        return loc != null ? IArtCapability.getOptional(stack).map(art -> JSONHandler.MODID_LOOKUP.getOrDefault(art, ForgeVersion.MOD_ID)).orElseGet(loc::getNamespace) : null;
     }
 
     @Nonnull
     protected IRarity getRarity(@Nonnull final ItemStack stack, @Nonnull final Predicate<IRarity> condition) {
-        @Nullable final IArtCapability cap = IArtCapability.get(stack);
-        if(cap == null || !cap.hasArt()) return super.getRarity(stack);
-
-        @Nullable final IRarity rarity = IJSONPainting.from(cap.getArt()).getRarity();
-        return condition.test(rarity) ? rarity : IJSONPainting.from(cap.getArt()).isCreative() ? EnumRarity.EPIC : EnumRarity.UNCOMMON;
+        return IArtCapability.getOptional(stack).map(art -> {
+            @Nullable final IRarity rarity = IJSONPainting.from(art).getRarity();
+            return condition.test(rarity) ? rarity : IJSONPainting.from(art).isCreative() ? EnumRarity.EPIC : EnumRarity.UNCOMMON;
+        }).orElseGet(() -> super.getRarity(stack));
     }
 
     @Nonnull

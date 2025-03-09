@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. jbredwards
+ * Copyright (c) 2025. jbredwards
  * All rights reserved.
  */
 
@@ -10,13 +10,17 @@ import com.google.common.eventbus.Subscribe;
 import git.jbredwards.jsonpaintings.mod.asm.ASMHandler;
 import git.jbredwards.jsonpaintings.mod.client.PaintingsResourcePack;
 import git.jbredwards.jsonpaintings.mod.client.RenderJSONPainting;
-import git.jbredwards.jsonpaintings.mod.common.EventHandler;
 import git.jbredwards.jsonpaintings.mod.common.capability.IArtCapability;
 import git.jbredwards.jsonpaintings.mod.common.commands.CommandJSONPaintings;
 import git.jbredwards.jsonpaintings.mod.common.compat.top.TOPHandler;
 import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
 import git.jbredwards.jsonpaintings.mod.common.util.JSONHandler;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.entity.item.EntityPainting;
+import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
+import net.minecraftforge.client.resource.VanillaResourceType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
@@ -33,6 +37,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -45,20 +50,21 @@ import java.util.List;
 @SuppressWarnings({"UnstableApiUsage", "unused"})
 public final class JSONPaintings extends DummyModContainer
 {
-    @Nonnull
-    public static final String MODID = "jsonpaintings", NAME = "JSON Paintings", VERSION = "1.3.0";
-    public static boolean IS_PSG_INSTALLED, IS_JEI_INSTALLED;
+    @Nonnull public static final String MODID = "jsonpaintings", NAME = "JSON Paintings", VERSION = "1.4.0";
+    @Nonnull public static final Logger LOGGER = LogManager.getFormatterLogger(NAME);
+    @Nullable private static String creditsKey, descKey;
 
-    @Nonnull
-    public static final Logger LOGGER = LogManager.getFormatterLogger(NAME);
+    public static boolean IS_PSG_INSTALLED, IS_JEI_INSTALLED;
     public JSONPaintings() {
         super(new ModMetadata());
         getMetadata().modId = MODID;
         getMetadata().name = NAME;
         getMetadata().version = VERSION;
         getMetadata().url = "https://github.com/jbredwards/JSON-Paintings-Mod";
-        getMetadata().description = "Easily add custom paintings through a json file!";
         getMetadata().authorList = Collections.singletonList("jbredwards");
+        getMetadata().credits = "mod.jsonpaintings.credits";
+        getMetadata().description = "mod.jsonpaintings.description";
+        getMetadata().logoFile = "logo.png";
         // due to https://github.com/mezz/JustEnoughItems/issues/1549
         getMetadata().dependencies.addAll(new DependencyParser(getModId(), FMLCommonHandler.instance().getSide()).parseDependencies("after:jei@[4.15.0.276,);").dependencies);
     }
@@ -78,6 +84,14 @@ public final class JSONPaintings extends DummyModContainer
     @Override
     public Class<?> getCustomResourcePackClass() { return PaintingsResourcePack.class; }
 
+    @Subscribe
+    public void preInit(@Nonnull final FMLPreInitializationEvent event) {
+        CapabilityManager.INSTANCE.register(IArtCapability.class, IArtCapability.Storage.INSTANCE, () -> {throw new UnsupportedOperationException();});
+        MinecraftForge.EVENT_BUS.register(IArtCapability.class);
+        IS_PSG_INSTALLED = Loader.isModLoaded("paintingselgui");
+        IS_JEI_INSTALLED = Loader.isModLoaded("jei");
+    }
+
     @SideOnly(Side.CLIENT)
     @Subscribe
     public void preInitClient(@Nonnull FMLPreInitializationEvent event) {
@@ -85,17 +99,20 @@ public final class JSONPaintings extends DummyModContainer
     }
 
     @Subscribe
-    public void preInit(@Nonnull final FMLPreInitializationEvent event) {
-        CapabilityManager.INSTANCE.register(IArtCapability.class, IArtCapability.Storage.INSTANCE, IArtCapability.Impl::new);
-        MinecraftForge.EVENT_BUS.register(IArtCapability.class);
-        MinecraftForge.EVENT_BUS.register(EventHandler.class);
-        IS_PSG_INSTALLED = Loader.isModLoaded("paintingselgui");
-        IS_JEI_INSTALLED = Loader.isModLoaded("jei");
-    }
-
-    @Subscribe
     public void init(@Nonnull final FMLInitializationEvent event) {
         if(Loader.isModLoaded("theoneprobe")) TOPHandler.initialize();
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Subscribe
+    public void initClient(@Nonnull final FMLInitializationEvent event) {
+        // allow this mod's description and credits to be translated
+        ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener((ISelectiveResourceReloadListener)(manager, condition) -> {
+            if(condition.test(VanillaResourceType.LANGUAGES) && getMetadata() != null) {
+                getMetadata().credits = I18n.format(creditsKey == null ? creditsKey = getMetadata().credits : creditsKey).replace("\\n", "\n");
+                getMetadata().description = I18n.format(descKey == null ? descKey = getMetadata().description : descKey);
+            }
+        });
     }
 
     @Subscribe

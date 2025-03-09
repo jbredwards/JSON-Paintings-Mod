@@ -11,7 +11,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'maven-publish'
 
-version = 'v1.3.0-mc1.12.2'
+version = 'v1.4.0-mc1.12.2'
 group = 'git.jbredwards.jsonpaintings' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'JSON-Paintings'
 sourceCompatibility  = targetCompatibility = '1.8'
@@ -24,6 +24,7 @@ minecraft {
 }
 
 repositories {
+    maven { url 'https://cursemaven.com' }
     maven { url 'https://dvs1.progwml6.com/files/maven' }
     maven { url 'https://jitpack.io' }
     maven { url 'https://maven.covers1624.net' }
@@ -35,6 +36,8 @@ dependencies {
     deobfCompile 'com.github.TehNut-Mods:HWYLA:1.12-SNAPSHOT'
     deobfCompile 'mcjty.theoneprobe:TheOneProbe-1.12:1.12-1.4.19-11'
     deobfCompile 'mezz.jei:jei_1.12.2:4.15.0.276'
+    // CurseMaven
+    deobfProvided 'curse.maven:psg-252043:2524727'
 }
 
 task deobfJar(type: Jar) {

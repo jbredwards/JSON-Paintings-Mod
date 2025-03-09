@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. jbredwards
+ * Copyright (c) 2025. jbredwards
  * All rights reserved.
  */
 
@@ -15,6 +15,9 @@ import net.minecraft.init.Items;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 
 import javax.annotation.Nonnull;
@@ -38,16 +41,16 @@ public final class TOPHandler
         TheOneProbe.theOneProbeImp.registerEntityDisplayOverride((mode, probeInfo, player, world, entity, data) -> {
             if(entity instanceof EntityPainting) {
                 @Nonnull final EntityPainting.EnumArt art = ((EntityPainting)entity).art;
-                @Nonnull final String motive = Optional.ofNullable(IJSONPainting.from(art).getRarity())
-                        .map(rarity -> rarity.getColor() + art.title)
-                        .orElseGet(() -> (IJSONPainting.from(art).isCreative() ? EnumRarity.EPIC : EnumRarity.UNCOMMON).getColor() + art.title);
+                @Nonnull final ITextComponent motive = new TextComponentTranslation(art.title)
+                        .setStyle(new Style().setColor(Optional.ofNullable(IJSONPainting.from(art).getRarity())
+                        .orElseGet(() -> IJSONPainting.from(art).isCreative() ? EnumRarity.EPIC : EnumRarity.UNCOMMON).getColor()));
 
                 // main info + mod name
                 if(Tools.show(mode, Config.getRealConfig().getShowModName())) probeInfo.horizontal()
                         .item(new ItemStack(Items.PAINTING))
                         .vertical()
                         .element(new ElementTextComponent(TextStyleClass.INFO, new TextComponentTranslation("jsonpaintings.wailaMotive", motive)))
-                        .text(TextStyleClass.MODNAME + IJSONPainting.from(art).getModNameOrDefault());
+                        .element(new ElementTextComponent(TextStyleClass.MODNAME, new TextComponentString(IJSONPainting.from(art).getModNameOrDefault())));
 
                 // main info
                 else probeInfo.horizontal(probeInfo.defaultLayoutStyle().alignment(ElementAlignment.ALIGN_CENTER))
@@ -63,11 +66,11 @@ public final class TOPHandler
                     probeInfo = probeInfo.horizontal(probeInfo.defaultLayoutStyle().alignment(ElementAlignment.ALIGN_CENTER))
                             .icon(new ResourceLocation(TheOneProbe.MODID, "textures/gui/icons.png"), player.isSneaking() ? 0 : 16, offs, dim, dim,
                                     probeInfo.defaultIconStyle().width(v ? 18 : 20).height(v ? 14 : 16).textureWidth(32).textureHeight(32))
-                            .text((player.isSneaking() ? TextStyleClass.OK : TextStyleClass.WARNING) + IProbeInfo.STARTLOC + "jsonpaintings.wailaSneakToCapture" + IProbeInfo.ENDLOC);
+                            .element(new ElementTextComponent(player.isSneaking() ? TextStyleClass.OK : TextStyleClass.WARNING, new TextComponentTranslation("jsonpaintings.wailaSneakToCapture")));
                 }
 
                 // exclusive
-                if(IJSONPainting.from(art).isCreative()) probeInfo.text(IProbeInfo.STARTLOC + "jsonpaintings.wailaExclusive" + IProbeInfo.ENDLOC);
+                if(IJSONPainting.from(art).isCreative()) probeInfo.element(new ElementTextComponent(TextStyleClass.INFO, new TextComponentTranslation("jsonpaintings.wailaExclusive")));
                 return true;
             }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. jbredwards
+ * Copyright (c) 2025. jbredwards
  * All rights reserved.
  */
 
@@ -46,9 +46,9 @@ public final class JSONHandler
     // reads each mod
     public static void readMods() {
         for(@Nonnull final ModContainer container : Loader.instance().getModList()) {
-            @Nullable final InputStream file = Loader.class.getResourceAsStream(String.format("/assets/%s/paintings/paintings.json", container.getModId()));
+            @Nullable final InputStream file = Loader.class.getResourceAsStream(String.format("/assets/%s/paintings/paintings.json", container.getModId().replaceAll("[<>:\"|?*]", "_")));
             if(file != null) {
-                try { read(new InputStreamReader(file), container, true, false); }
+                try(@Nonnull final Reader reader = new InputStreamReader(file)) { read(reader, container, true, false); }
                 //catch here as to not skip other mods' paintings
                 catch(@Nonnull final Exception e) { e.printStackTrace(); }
             }
@@ -57,8 +57,8 @@ public final class JSONHandler
 
     // reads the minecraft run folder
     public static void readInstance(final boolean isReload) throws Exception {
-        final File file = new File("paintings", "paintings.json");
-        if(file.exists()) read(new FileReader(file), Loader.instance().getIndexedModList().get(JSONPaintings.MODID), false, isReload);
+        @Nonnull final File file = new File("paintings", "paintings.json");
+        if(file.exists()) try(@Nonnull final Reader reader = new FileReader(file)) { read(reader, Loader.instance().getIndexedModList().get(JSONPaintings.MODID), false, isReload); }
     }
 
     static void read(@Nonnull final Reader reader, @Nonnull final ModContainer container, final boolean isModded, final boolean isReload) throws Exception {

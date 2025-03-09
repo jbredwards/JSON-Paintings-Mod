@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. jbredwards
+ * Copyright (c) 2025. jbredwards
  * All rights reserved.
  */
 
@@ -18,7 +18,6 @@ import net.minecraft.init.Items;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -44,9 +43,6 @@ public final class JEIHandler implements IModPlugin
 
     @Override
     public void registerItemSubtypes(@Nonnull final ISubtypeRegistry subtypeRegistryIn) {
-        subtypeRegistryIn.registerSubtypeInterpreter(Items.PAINTING, stack -> {
-            @Nullable final IArtCapability cap = IArtCapability.get(stack);
-            return cap != null && cap.hasArt() ? cap.getArt().title : "Any";
-        });
+        subtypeRegistryIn.registerSubtypeInterpreter(Items.PAINTING, stack -> IArtCapability.getOptional(stack).map(art -> String.valueOf(art.ordinal())).orElse("*"));
     }
 }

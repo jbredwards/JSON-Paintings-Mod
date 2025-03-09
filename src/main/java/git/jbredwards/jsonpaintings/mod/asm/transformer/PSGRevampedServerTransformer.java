@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. jbredwards
+ * Copyright (c) 2025. jbredwards
  * All rights reserved.
  */
 
@@ -50,6 +50,7 @@ public final class PSGRevampedServerTransformer implements IClassTransformer, Op
                  * }
                  */
                 if(method.name.equals("onPaintingPlaced")) {
+                    if(method.visibleAnnotations != null) method.visibleAnnotations = null;
                     for(final AbstractInsnNode insn : method.instructions.toArray()) {
                         if(insn.getOpcode() == INVOKESTATIC && ((MethodInsnNode)insn).name.equals("values")) {
                             method.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 3));

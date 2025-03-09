@@ -1,19 +1,21 @@
 /*
- * Copyright (c) 2024. jbredwards
+ * Copyright (c) 2025. jbredwards
  * All rights reserved.
  */
 
 package git.jbredwards.jsonpaintings.mod.common.compat.waila;
 
 import com.google.common.base.Strings;
+import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
 import mcp.mobius.waila.api.*;
 import mcp.mobius.waila.config.FormattingConfig;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.item.EnumRarity;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.common.IRarity;
 
 import javax.annotation.Nonnull;
@@ -30,12 +32,13 @@ public final class WailaHandler implements IWailaPlugin
 {
     @Override
     public void register(@Nonnull final IWailaRegistrar registrar) {
+        registrar.addConfig(JSONPaintings.MODID, "showMotive", true);
+        registrar.addConfig(JSONPaintings.MODID, "showExclusive", true);
+        registrar.addConfig(JSONPaintings.MODID, "showSneakToCapture", true);
         registrar.registerHeadProvider(Provider.INSTANCE, EntityPainting.class);
         registrar.registerBodyProvider(Provider.INSTANCE, EntityPainting.class);
         registrar.registerTailProvider(Provider.INSTANCE, EntityPainting.class);
-        registrar.addConfig("jsonpaintings", "showMotive", true);
-        registrar.addConfig("jsonpaintings", "showExclusive", true);
-        registrar.addConfig("jsonpaintings", "showSneakToCapture", true);
+        registrar.registerTooltipRenderer(JSONPaintings.MODID + ":component", TTRenderComponent.INSTANCE);
     }
 
     enum Provider implements IWailaEntityProvider
@@ -61,14 +64,14 @@ public final class WailaHandler implements IWailaPlugin
             if(entity instanceof EntityPainting) {
                 @Nonnull final EntityPainting.EnumArt art = ((EntityPainting)entity).art;
                 if(config.getConfig("showMotive"))
-                    currentTip.add(I18n.translateToLocalFormatted("jsonpaintings.wailaMotive", TextFormatting.GRAY + art.title));
+                    currentTip.add(TTRenderComponent.toString(new TextComponentTranslation("jsonpaintings.wailaMotive", new TextComponentTranslation(art.title).setStyle(new Style().setColor(TextFormatting.GRAY)))));
 
                 currentTip.add("");
                 if(!accessor.getPlayer().isCreative() && !accessor.getPlayer().isSpectator() && !IJSONPainting.from(art).alwaysCapture() && config.getConfig("showSneakToCapture"))
-                    currentTip.add(TextFormatting.DARK_GREEN + I18n.translateToLocal("jsonpaintings.wailaSneakToCapture"));
+                    currentTip.add(TTRenderComponent.toString(new TextComponentTranslation("jsonpaintings.wailaSneakToCapture").setStyle(new Style().setColor(TextFormatting.DARK_GREEN))));
 
                 if(IJSONPainting.from(art).isCreative() && config.getConfig("showExclusive"))
-                    currentTip.add(I18n.translateToLocal("jsonpaintings.wailaExclusive"));
+                    currentTip.add(TTRenderComponent.toString(new TextComponentTranslation("jsonpaintings.wailaExclusive")));
             }
 
             return currentTip;
