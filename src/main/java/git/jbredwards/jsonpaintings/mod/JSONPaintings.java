@@ -62,11 +62,12 @@ public final class JSONPaintings
         ReflectionHelper.setPrivateValue(FMLModContainer.class, (FMLModContainer)Loader.instance().activeModContainer(), ModContainer.Disableable.NEVER, "disableability");
         // allow this mod's description and credits to be translated
         @Nonnull final ModMetadata metadata = event.getModMetadata();
-        @Nonnull final String creditsKey = metadata.credits, descKey = metadata.description;
+        @Nonnull final String credits = metadata.credits, desc = metadata.description;
+        @Nonnull final String creditsKey = "mod." + MODID + ".credits", descKey = "mod." + MODID + ".description";
         ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener((ISelectiveResourceReloadListener)(manager, condition) -> {
             if(condition.test(VanillaResourceType.LANGUAGES)) {
-                metadata.credits = I18n.format(creditsKey).replace("\\n", "\n");
-                metadata.description = I18n.format(descKey);
+                metadata.credits = I18n.hasKey(creditsKey) ? I18n.format(creditsKey).replace("\\n", "\n") : credits;
+                metadata.description = I18n.hasKey(descKey) ? I18n.format(descKey).replace("\\n", "\n") : desc;
             }
         });
     }

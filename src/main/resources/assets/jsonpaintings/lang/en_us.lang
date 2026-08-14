@@ -8,10 +8,6 @@ jsonpaintings.command.success=Successfully reloaded paintings
 jsonpaintings.command.usage=/jsonpaintings reload
 jsonpaintings.command.usage.trimmed=/paintings reload
 
-# Mod info
-mod.jsonpaintings.credits=\n- jbredwards: creator and maintainer
-mod.jsonpaintings.description=Easily add custom paintings through a json file!
-
 # Waila Body Info
 jsonpaintings.wailaExclusive=§dExclusive: §7not obtainable from cycling paintings
 jsonpaintings.wailaMotive=%s
