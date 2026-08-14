@@ -40,7 +40,7 @@ public final class ASMHandler implements IFMLLoadingPlugin
 
     @Nonnull
     @Override
-    public String getModContainerClass() { return "git.jbredwards.jsonpaintings.mod.JSONPaintings"; }
+    public String getModContainerClass() { return "git.jbredwards.jsonpaintings.mod.JSONPaintingsCompanion"; }
 
     @Override
     public void injectData(@Nonnull Map<String, Object> data) { modLocation = (File)data.get("coremodLocation"); }

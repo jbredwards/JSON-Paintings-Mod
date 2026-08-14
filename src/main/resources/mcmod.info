@@ -1,0 +1,11 @@
+[{
+  "modid": "jsonpaintings",
+  "name": "JSON Paintings",
+  "description": "mod.jsonpaintings.description",
+  "version": "${mod_version}",
+  "mcversion": "${mcversion}",
+  "logoFile": "logo.png",
+  "url": "https://github.com/jbredwards/JSON-Paintings-Mod",
+  "authorList": ["jbredwards"],
+  "credits": "mod.jsonpaintings.credits"
+}]

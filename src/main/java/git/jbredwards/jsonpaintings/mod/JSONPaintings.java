@@ -5,10 +5,6 @@
 
 package git.jbredwards.jsonpaintings.mod;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-import git.jbredwards.jsonpaintings.mod.asm.ASMHandler;
-import git.jbredwards.jsonpaintings.mod.client.PaintingsResourcePack;
 import git.jbredwards.jsonpaintings.mod.client.RenderJSONPainting;
 import git.jbredwards.jsonpaintings.mod.common.capability.IArtCapability;
 import git.jbredwards.jsonpaintings.mod.common.commands.CommandJSONPaintings;
@@ -29,62 +25,28 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.versioning.ArtifactVersion;
-import net.minecraftforge.fml.common.versioning.DependencyParser;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
 
 /**
  *
  * @author jbred
  *
  */
-@SuppressWarnings({"UnstableApiUsage", "unused"})
-public final class JSONPaintings extends DummyModContainer
+@Mod(modid = JSONPaintings.MODID, name = JSONPaintings.NAME, version = JSONPaintings.VERSION,
+dependencies = "after:jei@[4.15.0.276,);") // due to https://github.com/mezz/JustEnoughItems/issues/1549
+public final class JSONPaintings
 {
-    @Nonnull public static final String MODID = "jsonpaintings", NAME = "JSON Paintings", VERSION = "1.4.0";
+    @Nonnull public static final String MODID = Tags.MOD_ID, NAME = Tags.NAME, VERSION = Tags.VERSION;
     @Nonnull public static final Logger LOGGER = LogManager.getFormatterLogger(NAME);
-    @Nullable private static String creditsKey, descKey;
-
     public static boolean IS_PSG_INSTALLED, IS_JEI_INSTALLED;
-    public JSONPaintings() {
-        super(new ModMetadata());
-        getMetadata().modId = MODID;
-        getMetadata().name = NAME;
-        getMetadata().version = VERSION;
-        getMetadata().url = "https://github.com/jbredwards/JSON-Paintings-Mod";
-        getMetadata().authorList = Collections.singletonList("jbredwards");
-        getMetadata().credits = "mod.jsonpaintings.credits";
-        getMetadata().description = "mod.jsonpaintings.description";
-        getMetadata().logoFile = "logo.png";
-        // due to https://github.com/mezz/JustEnoughItems/issues/1549
-        getMetadata().dependencies.addAll(new DependencyParser(getModId(), FMLCommonHandler.instance().getSide()).parseDependencies("after:jei@[4.15.0.276,);").dependencies);
-    }
 
-    @Override
-    public boolean registerBus(@Nonnull final EventBus bus, @Nonnull final LoadController controller) {
-        bus.register(this);
-        return true;
-    }
-
-    @Nonnull
-    @Override
-    public File getSource() { return ASMHandler.modLocation; }
-
-    @Nonnull
-    @SideOnly(Side.CLIENT)
-    @Override
-    public Class<?> getCustomResourcePackClass() { return PaintingsResourcePack.class; }
-
-    @Subscribe
+    @Mod.EventHandler
     public void preInit(@Nonnull final FMLPreInitializationEvent event) {
         CapabilityManager.INSTANCE.register(IArtCapability.class, IArtCapability.Storage.INSTANCE, () -> {throw new UnsupportedOperationException();});
         MinecraftForge.EVENT_BUS.register(IArtCapability.class);
@@ -93,29 +55,28 @@ public final class JSONPaintings extends DummyModContainer
     }
 
     @SideOnly(Side.CLIENT)
-    @Subscribe
-    public void preInitClient(@Nonnull FMLPreInitializationEvent event) {
+    @Mod.EventHandler
+    public void preInitClient(@Nonnull final FMLPreInitializationEvent event) {
         RenderingRegistry.registerEntityRenderingHandler(EntityPainting.class, RenderJSONPainting::new);
-    }
-
-    @Subscribe
-    public void init(@Nonnull final FMLInitializationEvent event) {
-        if(Loader.isModLoaded("theoneprobe")) TOPHandler.initialize();
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Subscribe
-    public void initClient(@Nonnull final FMLInitializationEvent event) {
+        // remove "disable" button in mod gui
+        ReflectionHelper.setPrivateValue(FMLModContainer.class, (FMLModContainer)Loader.instance().activeModContainer(), ModContainer.Disableable.NEVER, "disableability");
         // allow this mod's description and credits to be translated
+        @Nonnull final ModMetadata metadata = event.getModMetadata();
+        @Nonnull final String creditsKey = metadata.credits, descKey = metadata.description;
         ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener((ISelectiveResourceReloadListener)(manager, condition) -> {
-            if(condition.test(VanillaResourceType.LANGUAGES) && getMetadata() != null) {
-                getMetadata().credits = I18n.format(creditsKey == null ? creditsKey = getMetadata().credits : creditsKey).replace("\\n", "\n");
-                getMetadata().description = I18n.format(descKey == null ? descKey = getMetadata().description : descKey);
+            if(condition.test(VanillaResourceType.LANGUAGES)) {
+                metadata.credits = I18n.format(creditsKey).replace("\\n", "\n");
+                metadata.description = I18n.format(descKey);
             }
         });
     }
 
-    @Subscribe
+    @Mod.EventHandler
+    public void init(@Nonnull final FMLInitializationEvent event) {
+        if(Loader.isModLoaded("theoneprobe")) TOPHandler.initialize();
+    }
+
+    @Mod.EventHandler
     public void postInit(@Nonnull final FMLPostInitializationEvent event) throws Exception {
         JSONHandler.readMods();
         JSONHandler.readInstance(false);
@@ -126,13 +87,9 @@ public final class JSONPaintings extends DummyModContainer
         }
     }
 
-    @Subscribe
+    @Mod.EventHandler
     public void serverStarting(@Nonnull final FMLServerStartingEvent event) {
         event.registerServerCommand(new CommandJSONPaintings());
         event.registerServerCommand(new CommandJSONPaintings.Trimmed());
     }
-
-    @Nonnull
-    @Override
-    public List<ArtifactVersion> getDependencies() { return getMetadata().dependencies; }
 }
