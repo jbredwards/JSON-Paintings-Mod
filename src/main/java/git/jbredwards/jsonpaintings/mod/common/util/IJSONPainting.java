@@ -5,6 +5,8 @@
 
 package git.jbredwards.jsonpaintings.mod.common.util;
 
+import com.google.common.base.MoreObjects;
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.IRarity;
@@ -13,56 +15,52 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * {@link net.minecraft.entity.item.EntityPainting.EnumArt EnumArt} implements that at runtime
+ * Exists for legacy compat only. Use {@link ActivePaintingInfo} instead.
+ * @see git.jbredwards.jsonpaintings.mod.asm.AccessorEnumArt
  * @author jbred
  *
  */
+@Deprecated
 public interface IJSONPainting
 {
-    // nonnull if this uses special rendering
-    @Nonnull ResourceLocation getFrontTexture();
-    void setFrontTexture(@Nonnull final ResourceLocation texture);
-
-    // nonnull if this uses special rendering
-    @Nonnull ResourceLocation getBackTexture();
-    void setBackTexture(@Nonnull final ResourceLocation texture);
-
-    // nonnull if this uses special rendering
-    @Nonnull ResourceLocation getSideTexture();
-    void setSideTexture(@Nonnull final ResourceLocation texture);
-
-    // the name of the mod that adds this, used by Waila & TOP
-    @Nullable String getModName();
-    void setModName(@Nullable final String modName);
-
-    // the rarity of the painting (cosmetic only)
-    @Nullable IRarity getRarity();
-    void setRarity(@Nullable final IRarity rarity);
-
-    // if this should not be obtainable via painting cycling
-    boolean isCreative();
-    void setCreative(final boolean isCreative);
-
-    // if this should always be captured when broken
-    boolean alwaysCapture();
-    void setAlwaysCapture(final boolean alwaysCapture);
-
-    // if the back texture is specified, assume it has proper proportions
-    boolean hasBackTexture();
-    void setHasBackTexture(final boolean hasTexture);
-
-    // if the side texture is specified, assume it has proper proportions
-    boolean hasSideTexture();
-    void setHasSideTexture(final boolean hasTexture);
-
-    // only paintings added through this mod have this value set to true
-    boolean useSpecialRenderer();
-    void setUseSpecialRenderer(final boolean useSpecialRenderer);
-
-    @SuppressWarnings("ConstantConditions")
     @Nonnull
-    static IJSONPainting from(@Nonnull final EntityPainting.EnumArt art) { return (IJSONPainting)(Object)art; }
+    @Deprecated default ResourceLocation getFrontTexture() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).frontTexture; }
+    @Deprecated default void setFrontTexture(@Nonnull final ResourceLocation texture) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).frontTexture = texture; }
 
     @Nonnull
-    default String getModNameOrDefault() { return getModName() == null ? "Minecraft Forge" : getModName(); }
+    @Deprecated default ResourceLocation getBackTexture() { return MoreObjects.firstNonNull(ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).backTexture, JSONHandler.DEFAULT_BACK_TEXTURE); }
+    @Deprecated default void setBackTexture(@Nonnull final ResourceLocation texture) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).backTexture = texture; }
+
+    @Nonnull
+    @Deprecated default ResourceLocation getSideTexture() { return MoreObjects.firstNonNull(ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).sideTexture, getBackTexture()); }
+    @Deprecated default void setSideTexture(@Nonnull final ResourceLocation texture) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).sideTexture = texture; }
+
+    @Nullable
+    @Deprecated default String getModName() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).modName; }
+    @Deprecated default void setModName(@Nullable final String modName) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).modName = modName; }
+
+    @Nullable
+    @Deprecated default IRarity getRarity() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).rarity; }
+    @Deprecated default void setRarity(@Nullable final IRarity rarity) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).rarity = rarity; }
+
+    @Deprecated default boolean isCreative() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).isTreasure; }
+    @Deprecated default void setCreative(final boolean isCreative) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).isTreasure = isCreative; }
+
+    @Deprecated default boolean alwaysCapture() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).alwaysCapture; }
+    @Deprecated default void setAlwaysCapture(final boolean alwaysCapture) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).alwaysCapture = alwaysCapture; }
+
+    @Deprecated default boolean hasBackTexture() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).backTexture != null; }
+    @Deprecated default void setHasBackTexture(final boolean hasTexture) { /* NO-OP */ }
+
+    @Deprecated default boolean hasSideTexture() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).sideTexture != null || hasBackTexture(); }
+    @Deprecated default void setHasSideTexture(final boolean hasTexture) { /* NO-OP */ }
+
+    @Deprecated default boolean useSpecialRenderer() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).useSpecialRenderer; }
+    @Deprecated default void setUseSpecialRenderer(final boolean useSpecialRenderer) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).useSpecialRenderer = useSpecialRenderer; }
+
+    @Nonnull
+    @Deprecated static IJSONPainting from(@Nonnull final EntityPainting.EnumArt art) { return (IJSONPainting)(Object)art; }
+
+    @Nonnull
+    @Deprecated default String getModNameOrDefault() { return MoreObjects.firstNonNull(getModName(), "Minecraft Forge"); }
 }

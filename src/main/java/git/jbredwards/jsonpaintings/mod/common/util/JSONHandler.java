@@ -13,11 +13,9 @@ import com.google.gson.JsonParser;
 import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import net.minecraft.command.CommandException;
 import net.minecraft.entity.item.EntityPainting;
-import net.minecraft.item.EnumRarity;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.common.IRarity;
 import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
@@ -171,24 +169,7 @@ public final class JSONHandler
             }
 
             // painting rarity
-            if(json.has("rarity")) {
-                @Nonnull final JsonElement rarity = json.get("rarity");
-
-                // built-in rarity value
-                if(rarity.isJsonPrimitive()) Arrays.stream(EnumRarity.values())
-                        .filter(enumRarity -> rarity.getAsString().equalsIgnoreCase(enumRarity.getName()))
-                        .findFirst()
-                        .ifPresent(painting::setRarity);
-
-                // custom rarity value
-                else painting.setRarity(new IRarity() {
-                    @Nonnull final String name = JsonUtils.getString(JsonUtils.getJsonObject(rarity, "rarity"), "name");
-                    @Nonnull public String getName() { return name; }
-
-                    @Nonnull final TextFormatting color = getFormatColor(rarity.getAsJsonObject());
-                    @Nonnull public TextFormatting getColor() { return color; }
-                });
-            }
+            if(json.has("rarity")) painting.setRarity(RarityUtils.parse(json.get("rarity")));
 
             // painting mapping
             if(json.has("mapping")) {

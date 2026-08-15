@@ -30,6 +30,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly 'org.jetbrains:annotations:26.1.0'
     deobfCompile 'com.github.TehNut-Mods:HWYLA:1.12-SNAPSHOT'
     deobfCompile 'mezz.jei:jei_1.12.2:4.15.0.276'
     // CurseMaven
