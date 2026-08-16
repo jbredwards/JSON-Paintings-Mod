@@ -5,11 +5,16 @@
 
 package git.jbredwards.jsonpaintings.mod.asm;
 
+import com.google.common.collect.Lists;
+import git.jbredwards.jsonpaintings.mod.asm.transformer.*;
+import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,34 +27,58 @@ import java.util.Map;
 @IFMLLoadingPlugin.Name("JSON Paintings Plugin")
 public final class ASMHandler implements IFMLLoadingPlugin
 {
-    public static File modLocation;
-
-    @Nonnull
-    @Override
-    public String[] getASMTransformerClass() {
-        return new String[] {
-                "git.jbredwards.jsonpaintings.mod.asm.transformer.EntityPaintingTransformer",
-                "git.jbredwards.jsonpaintings.mod.asm.transformer.EnumArtTransformer",
-                "git.jbredwards.jsonpaintings.mod.asm.transformer.ItemTransformer",
+    @SuppressWarnings("unused")
+    public static final class Transformer implements IClassTransformer
+    {
+        @Nonnull
+        public static final List<IClassTransformer> TRANSFORMERS = Lists.newArrayList(
+                new EntityPaintingTransformer(),
+                new EnumArtTransformer(),
+                new ItemTransformer(),
                 //mod compat
-                "git.jbredwards.jsonpaintings.mod.asm.transformer.PSGRevampedClientTransformer",
-                "git.jbredwards.jsonpaintings.mod.asm.transformer.PSGRevampedServerTransformer",
-                "git.jbredwards.jsonpaintings.mod.asm.transformer.TwilightForestTransformer"
-        };
+                new PSGRevampedClientTransformer(),
+                new PSGRevampedServerTransformer(),
+                new TwilightForestTransformer()
+        );
+
+        @Nullable
+        @Override
+        public byte[] transform(@Nullable final String name, @Nullable final String transformedName, @Nullable final byte[] basicClass) {
+            if(basicClass == null || transformedName == null) return basicClass;
+            else return TRANSFORMERS.stream().reduce(basicClass, (b, ct) -> ct.transform(name, transformedName, b), (b1, b2) -> b2);
+        }
+    }
+
+    public static File modLocation;
+    public static Path paintingsLocation;
+
+    @Override
+    public void injectData(@Nonnull final Map<String, Object> data) {
+        modLocation = (File)data.get("coremodLocation");
+        paintingsLocation = ((File)data.get("mcLocation")).toPath().resolve("paintings");
     }
 
     @Nonnull
     @Override
-    public String getModContainerClass() { return "git.jbredwards.jsonpaintings.mod.JSONPaintingsCompanion"; }
+    public String[] getASMTransformerClass() {
+        return new String[] {"git.jbredwards.jsonpaintings.mod.asm.ASMHandler$Transformer"};
+    }
 
+    @Nonnull
     @Override
-    public void injectData(@Nonnull Map<String, Object> data) { modLocation = (File)data.get("coremodLocation"); }
+    public String getModContainerClass() {
+        return "git.jbredwards.jsonpaintings.mod.JSONPaintingsCompanion";
+    }
 
     @Nullable
     @Override
-    public String getSetupClass() { return null; }
+    public String getSetupClass() {
+        return null;
+    }
 
     @Nullable
     @Override
-    public String getAccessTransformerClass() { return null; }
+    public String getAccessTransformerClass() {
+        return null;
+    }
 }
