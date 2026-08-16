@@ -5,8 +5,8 @@
 
 package git.jbredwards.jsonpaintings.mod.common.util;
 
-import com.google.common.base.MoreObjects;
 import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
+import git.jbredwards.jsonpaintings.api.PaintingHelper;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.IRarity;
@@ -28,11 +28,11 @@ public interface IJSONPainting
     @Deprecated default void setFrontTexture(@Nonnull final ResourceLocation texture) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).frontTexture = texture; }
 
     @Nonnull
-    @Deprecated default ResourceLocation getBackTexture() { return MoreObjects.firstNonNull(ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).backTexture, JSONHandler.DEFAULT_BACK_TEXTURE); }
+    @Deprecated default ResourceLocation getBackTexture() { return PaintingHelper.getBackTexture(ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this)); }
     @Deprecated default void setBackTexture(@Nonnull final ResourceLocation texture) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).backTexture = texture; }
 
     @Nonnull
-    @Deprecated default ResourceLocation getSideTexture() { return MoreObjects.firstNonNull(ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).sideTexture, getBackTexture()); }
+    @Deprecated default ResourceLocation getSideTexture() { return PaintingHelper.getSideTexture(ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this)); }
     @Deprecated default void setSideTexture(@Nonnull final ResourceLocation texture) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).sideTexture = texture; }
 
     @Nullable
@@ -55,12 +55,15 @@ public interface IJSONPainting
     @Deprecated default boolean hasSideTexture() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).sideTexture != null || hasBackTexture(); }
     @Deprecated default void setHasSideTexture(final boolean hasTexture) { /* NO-OP */ }
 
-    @Deprecated default boolean useSpecialRenderer() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).useSpecialRenderer; }
-    @Deprecated default void setUseSpecialRenderer(final boolean useSpecialRenderer) { ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).useSpecialRenderer = useSpecialRenderer; }
+    @Deprecated default boolean useSpecialRenderer() {
+        @Nonnull final ActivePaintingInfo info = ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this);
+        return info.frontTexture != null || info.backTexture != null || info.sideTexture != null;
+    }
+    @Deprecated default void setUseSpecialRenderer(final boolean useSpecialRenderer) { /* NO-OP */ }
 
     @Nonnull
     @Deprecated static IJSONPainting from(@Nonnull final EntityPainting.EnumArt art) { return (IJSONPainting)(Object)art; }
 
     @Nonnull
-    @Deprecated default String getModNameOrDefault() { return MoreObjects.firstNonNull(getModName(), "Minecraft Forge"); }
+    @Deprecated default String getModNameOrDefault() { return PaintingHelper.getModName(ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this)); }
 }

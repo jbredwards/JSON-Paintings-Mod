@@ -5,13 +5,23 @@
 
 package git.jbredwards.jsonpaintings.mod.asm.transformer;
 
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
+import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.launchwrapper.IClassTransformer;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.ListIterator;
+import java.util.Map;
 
 /**
  *
@@ -32,6 +42,33 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
             classNode.interfaces.add("git/jbredwards/jsonpaintings/mod/common/util/IJSONPainting");
             //add new fields
             classNode.fields.add(new FieldNode(ACC_PUBLIC, "jsonpaintings$info", "Lgit/jbredwards/jsonpaintings/api/ActivePaintingInfo;", null, null));
+            methods:
+            for(@Nonnull final MethodNode method : classNode.methods) {
+                /*
+                 * <init>:
+                 * Old code:
+                 * {
+                 *     ...
+                 * }
+                 *
+                 * New code:
+                 * // Store invoking mod for paintings.
+                 * {
+                 *     ...
+                 *     Hooks.addMod(this);
+                 * }
+                 */
+                if(method.name.equals("<init>")) {
+                    for(@Nonnull final ListIterator<AbstractInsnNode> it = method.instructions.iterator(); it.hasNext();) {
+                        if(it.next().getOpcode() == RETURN) {
+                            it.previous(); // Insert before return statement.
+                            it.add(new VarInsnNode(ALOAD, 0));
+                            it.add(new MethodInsnNode(INVOKESTATIC, "git/jbredwards/jsonpaintings/mod/asm/transformer/EnumArtTransformer$Hooks", "applyMod", "(Lnet/minecraft/entity/item/EntityPainting$EnumArt;)V", false));
+                            break methods;
+                        }
+                    }
+                }
+            }
             /*
              * @ASMGenerated
              * public PaintingInfo jsonpaintings$info()
@@ -67,5 +104,30 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
         }
 
         return basicClass;
+    }
+
+    @SuppressWarnings("unused")
+    public static final class Hooks
+    {
+        public static void applyMod(@Nonnull final EntityPainting.EnumArt painting) {
+            PAINTINGS.put(painting.title, painting);
+            if(painting.ordinal() < 26) { // Set default info for Vanilla's paintings.
+                @Nonnull final ActivePaintingInfo info = ActivePaintingInfo.get(painting);
+                info.author = new TextComponentString("Kristoffer Zetterstrand");
+                info.modId = "minecraft";
+                info.modName = "Minecraft";
+                return;
+            }
+
+            @Nullable final ModContainer mod = Loader.instance().activeModContainer();
+            if(mod == null) return; // No active container? skipping...
+            @Nonnull final ActivePaintingInfo info = ActivePaintingInfo.get(painting);
+            info.modId = mod.getModId();
+            info.modName = mod.getName();
+        }
+
+        // Helper.
+        @Nonnull private static final Map<String, EntityPainting.EnumArt> PAINTINGS = new LinkedHashMap<>();
+        @Nonnull public static Map<String, EntityPainting.EnumArt> paintings() { return Collections.unmodifiableMap(PAINTINGS); }
     }
 }

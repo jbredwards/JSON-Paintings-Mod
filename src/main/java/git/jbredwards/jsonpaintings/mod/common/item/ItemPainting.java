@@ -6,6 +6,7 @@
 package git.jbredwards.jsonpaintings.mod.common.item;
 
 import com.mcf.davidee.paintinggui.handler.PlacePaintingEventHandler;
+import git.jbredwards.jsonpaintings.api.PaintingHelper;
 import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import git.jbredwards.jsonpaintings.mod.common.capability.IArtCapability;
 import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
@@ -147,7 +148,7 @@ public class ItemPainting extends ItemHangingEntity
     @Override
     public String getCreatorModId(@Nonnull final ItemStack stack) {
         @Nullable final ResourceLocation loc = getRegistryName();
-        return loc != null ? IArtCapability.getOptional(stack).map(art -> JSONHandler.MODID_LOOKUP.getOrDefault(art, ForgeVersion.MOD_ID)).orElseGet(loc::getNamespace) : null;
+        return IArtCapability.getInfo(stack).map(PaintingHelper::getModId).orElse(loc != null ? loc.getNamespace() : null);
     }
 
     @Nonnull

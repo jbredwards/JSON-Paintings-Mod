@@ -7,7 +7,9 @@ package git.jbredwards.jsonpaintings.api;
 
 import git.jbredwards.jsonpaintings.mod.common.util.RarityUtils;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.common.IRarity;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,13 +29,6 @@ import javax.annotation.Nullable;
 @ApiStatus.AvailableSince("1.5.0")
 public abstract class PaintingInfo
 {
-    /**
-     * True if this uses the special JSON Paintings renderer.
-     * <br>While true, additional fields may be set, such as textures.
-     */
-    @ApiStatus.AvailableSince("1.5.0")
-    public boolean useSpecialRenderer;
-
     /**
      * The texture rendered on the front face of the painting.
      * <br>Must be non-null if this uses special rendering.
@@ -58,7 +53,25 @@ public abstract class PaintingInfo
     public ResourceLocation sideTexture;
 
     /**
+     * The item model used by painting items with this type stored.
+     * <br> Uses the default painting item model if null.
+     */
+    @ApiStatus.AvailableSince("1.5.0")
+    @Nullable
+    public ModelResourceLocation itemModel;
+
+    /**
+     * The id of the mod that adds this, used by item tooltips.
+     * <br> Automatically set to the active mod for {@code ActivePaintingInfo} when an {@code EnumArt} is created.
+     * <br> Uses "forge" if null.
+     */
+    @ApiStatus.AvailableSince("1.5.0")
+    @Nullable
+    public String modId;
+
+    /**
      * The name of the mod that adds this, used by Waila & TOP.
+     * <br> Automatically set to the active mod for {@code ActivePaintingInfo} when an {@code EnumArt} is created.
      * <br> Uses "Minecraft Forge" if null.
      */
     @ApiStatus.AvailableSince("1.5.0")
@@ -66,8 +79,23 @@ public abstract class PaintingInfo
     public String modName;
 
     /**
+     * The author of this painting, displayed in the painting item tooltip.
+     */
+    @ApiStatus.AvailableSince("1.5.0")
+    @Nullable
+    public ITextComponent author;
+
+    /**
+     * The formatted title of this painting.
+     * <br> Uses {@link net.minecraft.entity.item.EntityPainting.EnumArt#title} if null.
+     */
+    @ApiStatus.AvailableSince("1.5.0")
+    @Nullable
+    public ITextComponent title;
+
+    /**
      * The rarity of the painting (cosmetic only).
-     * <br> Uses {@link net.minecraft.item.EnumRarity#COMMON} if null.
+     * <br> Uses {@link net.minecraft.item.EnumRarity#UNCOMMON} if null.
      */
     @ApiStatus.AvailableSince("1.5.0")
     @Nullable
@@ -114,7 +142,6 @@ public abstract class PaintingInfo
     public abstract void setHeight(final int height);
 
     /**
-     * Unused if {@link PaintingInfo#useSpecialRenderer} is true.
      * @return X offset on the Vanilla painting atlas texture.
      * @author jbred
      */
@@ -129,7 +156,6 @@ public abstract class PaintingInfo
     public abstract void setXOffset(final int offset);
 
     /**
-     * Unused if {@link PaintingInfo#useSpecialRenderer} is true.
      * @return Y offset on the Vanilla painting atlas texture.
      * @author jbred
      */
@@ -148,20 +174,24 @@ public abstract class PaintingInfo
      * @author jbred
      */
     @ApiStatus.AvailableSince("1.5.0")
-    public void copyFrom(@Nonnull final PaintingInfo other) {
-        this.setWidth(other.getWidth());
-        this.setHeight(other.getHeight());
-        this.setXOffset(other.getXOffset());
-        this.setYOffset(other.getYOffset());
+    public void copyFrom(@Nonnull final PaintingInfo other, final boolean applyUnset) {
+        if(applyUnset || other.getWidth() > 0) this.setWidth(other.getWidth());
+        if(applyUnset || other.getHeight() > 0) this.setHeight(other.getHeight());
+        if(applyUnset || other.getXOffset() >= 0) this.setXOffset(other.getXOffset());
+        if(applyUnset || other.getYOffset() >= 0) this.setYOffset(other.getYOffset());
 
-        this.useSpecialRenderer = other.useSpecialRenderer;
-        this.frontTexture = other.frontTexture;
-        this.backTexture = other.backTexture;
-        this.sideTexture = other.sideTexture;
-        this.modName = other.modName;
-        this.rarity = other.rarity;
+        if(applyUnset || other.frontTexture != null) this.frontTexture = other.frontTexture;
+        if(applyUnset || other.backTexture != null) this.backTexture = other.backTexture;
+        if(applyUnset || other.sideTexture != null) this.sideTexture = other.sideTexture;
+        if(applyUnset || other.itemModel != null) this.itemModel = other.itemModel;
+        if(applyUnset || other.modId != null) this.modId = other.modId;
+        if(applyUnset || other.modName != null) this.modName = other.modName;
+        if(applyUnset || other.rarity != null) this.rarity = other.rarity;
         this.alwaysCapture = other.alwaysCapture;
         this.isTreasure = other.isTreasure;
+
+        if(applyUnset || other.author != null) this.author = other.author != null ? other.author.createCopy() : null;
+        if(applyUnset || other.title != null) this.title = other.title != null ? other.title.createCopy() : null;
     }
 
     /**
@@ -175,14 +205,18 @@ public abstract class PaintingInfo
         this.setXOffset(ByteBufUtils.readVarInt(from, 2));
         this.setYOffset(ByteBufUtils.readVarInt(from, 2));
 
-        this.useSpecialRenderer = from.readBoolean();
         this.frontTexture = from.readBoolean() ? new ResourceLocation(ByteBufUtils.readUTF8String(from)) : null;
         this.backTexture = from.readBoolean() ? new ResourceLocation(ByteBufUtils.readUTF8String(from)) : null;
         this.sideTexture = from.readBoolean() ? new ResourceLocation(ByteBufUtils.readUTF8String(from)) : null;
+        this.itemModel = from.readBoolean() ? new ModelResourceLocation(ByteBufUtils.readUTF8String(from)) : null;
+        this.modId = from.readBoolean() ? ByteBufUtils.readUTF8String(from) : null;
         this.modName = from.readBoolean() ? ByteBufUtils.readUTF8String(from) : null;
         this.rarity = from.readBoolean() ? RarityUtils.decode(from) : null;
         this.alwaysCapture = from.readBoolean();
         this.isTreasure = from.readBoolean();
+
+        this.author = from.readBoolean() ? ITextComponent.Serializer.jsonToComponent(ByteBufUtils.readUTF8String(from)) : null;
+        this.title = from.readBoolean() ? ITextComponent.Serializer.jsonToComponent(ByteBufUtils.readUTF8String(from)) : null;
     }
 
     /**
@@ -196,13 +230,17 @@ public abstract class PaintingInfo
         ByteBufUtils.writeVarInt(to, this.getXOffset(), 2);
         ByteBufUtils.writeVarInt(to, this.getYOffset(), 2);
 
-        to.writeBoolean(this.useSpecialRenderer);
         to.writeBoolean(this.frontTexture != null); if(this.frontTexture != null) ByteBufUtils.writeUTF8String(to, this.frontTexture.toString());
         to.writeBoolean(this.backTexture != null); if(this.backTexture != null) ByteBufUtils.writeUTF8String(to, this.backTexture.toString());
         to.writeBoolean(this.sideTexture != null); if(this.sideTexture != null) ByteBufUtils.writeUTF8String(to, this.sideTexture.toString());
+        to.writeBoolean(this.itemModel != null); if(this.itemModel != null) ByteBufUtils.writeUTF8String(to, this.itemModel.toString());
+        to.writeBoolean(this.modId != null); if(this.modId != null) ByteBufUtils.writeUTF8String(to, this.modId);
         to.writeBoolean(this.modName != null); if(this.modName != null) ByteBufUtils.writeUTF8String(to, this.modName);
         to.writeBoolean(this.rarity != null); if(this.rarity != null) RarityUtils.encode(to, this.rarity);
         to.writeBoolean(this.alwaysCapture);
         to.writeBoolean(this.isTreasure);
+
+        to.writeBoolean(this.author != null); if(this.author != null) ByteBufUtils.writeUTF8String(to, ITextComponent.Serializer.componentToJson(this.author));
+        to.writeBoolean(this.title != null); if(this.title != null) ByteBufUtils.writeUTF8String(to, ITextComponent.Serializer.componentToJson(this.title));
     }
 }

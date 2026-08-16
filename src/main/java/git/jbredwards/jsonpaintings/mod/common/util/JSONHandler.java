@@ -6,26 +6,32 @@
 package git.jbredwards.jsonpaintings.mod.common.util;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
+import git.jbredwards.jsonpaintings.api.BasicPaintingInfo;
+import git.jbredwards.jsonpaintings.api.PaintingHelper;
+import git.jbredwards.jsonpaintings.api.PaintingInfo;
 import git.jbredwards.jsonpaintings.mod.JSONPaintings;
-import net.minecraft.command.CommandException;
+import git.jbredwards.jsonpaintings.mod.asm.ASMHandler;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.item.EntityPainting;
+import net.minecraft.util.EnumTypeAdapterFactory;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.common.util.EnumHelper;
+import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
+import org.apache.commons.io.FilenameUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  *
@@ -34,171 +40,205 @@ import java.util.stream.StreamSupport;
  */
 public final class JSONHandler
 {
-    @Nonnull public static final Map<EntityPainting.EnumArt, String> MODID_LOOKUP = new HashMap<>();
-    @Nonnull public static final Map<String, EntityPainting.EnumArt> PAINTING_REMAPS = new HashMap<>();
-    static int nextPaintingId = 0;
-
     @Nonnull public static final ResourceLocation DEFAULT_BACK_TEXTURE = new ResourceLocation(JSONPaintings.MODID, "textures/paintings/back.png");
-    @Nonnull static final Set<String> newMotives = new HashSet<>();
+    @Nonnull public static final Map<String, EntityPainting.EnumArt> PAINTING_REMAPS = new HashMap<>();
+
+    @Nullable private static String activeMotive;
+    @Nullable private static ModContainer activeMod;
+
+    @Nonnull public static final List<JsonPaintingInfo> FROM_MOD_JSON = new ArrayList<>(), FROM_USER_JSON = new ArrayList<>();
+    @Nonnull public static final Set<String> PLACEMENT_EXCLUSIONS = new HashSet<>();
+
+    @Nonnull public static final JsonDeserializer<JsonPaintingInfo> DESERIALIZER = (jsonIn, type, ctx) -> {
+        @Nonnull final JsonObject json = jsonIn.getAsJsonObject();
+        @Nonnull final PaintingInfo info = new BasicPaintingInfo();
+        info.modId = activeMod != null ? activeMod.getModId() : JSONPaintings.MODID;
+
+        @Nonnull final String motive = activeMotive != null ? activeMotive : JsonUtils.getString(json, "motive");
+        @Nonnull final String frontTexturePath = frontTexturePath(info, motive);
+
+        if(json.has("textures")) {
+            @Nonnull final JsonObject textures = JsonUtils.getJsonObject(json.get("textures"), "textures");
+            @Nonnull final String front = JsonUtils.getString(textures, "front", frontTexturePath);
+            @Nonnull final String back = JsonUtils.getString(textures, "back", JSONPaintings.MODID + ":paintings/back");
+            @Nonnull final String side = JsonUtils.getString(textures, "side", back);
+
+            // Allow for texture locations to reference other textures. (example -> "back": "#front")
+            @Nonnull final ImmutableMap<String, String> textureMap = ImmutableMap.of("front", front, "back", back, "side", side);
+            info.frontTexture = buildLocation(front.charAt(0) == '#' ? textureMap.get(front.substring(1)) : front);
+            info.backTexture = buildLocation(back.charAt(0) == '#' ? textureMap.get(back.substring(1)) : back);
+            info.sideTexture = buildLocation(side.charAt(0) == '#' ? textureMap.get(side.substring(1)) : side);
+        }
+
+        // Front texture definition for modern paintings.
+        else if(json.has("asset_id")) info.frontTexture = buildLocation(JsonUtils.getString(json.get("asset_id"), "asset_id"), "textures/painting");
+
+        // Sets the painting dimensions.
+        // If not present, we assume this PaintingInfo will be used to override an existing painting.
+        if(json.has("width")) info.setWidth(Math.max(16, JsonUtils.getInt(json.get("width"), "width") << 4));
+        if(json.has("height")) info.setHeight(Math.max(16, JsonUtils.getInt(json.get("height"), "height") << 4));
+
+        // Miscellaneous client-side stuff.
+        if(json.has("author")) info.author = ctx.deserialize(json.get("author"), ITextComponent.class);
+        if(json.has("title")) info.title = ctx.deserialize(json.get("title"), ITextComponent.class);
+        if(json.has("item_model")) {
+            @Nonnull final String itemModel = JsonUtils.getString(json.get("item_model"), "item_model");
+            info.itemModel = itemModel.indexOf('#') == -1 ? new ModelResourceLocation(itemModel, "inventory") : new ModelResourceLocation(itemModel);
+        }
+
+        // Exclusive paintings.
+        @Nullable final Boolean isTreasure;
+        if(json.has("isCreative")) isTreasure = JsonUtils.getBoolean(json.get("isCreative"), "isCreative");
+        else if(json.has("is_creative")) isTreasure = JsonUtils.getBoolean(json.get("is_creative"), "is_creative");
+        else if(json.has("is_treasure")) isTreasure = JsonUtils.getBoolean(json.get("is_treasure"), "is_treasure");
+        else isTreasure = null;
+
+        // Hardcoded paintings.
+        @Nullable final Boolean alwaysCapture;
+        if(json.has("alwaysCapture")) alwaysCapture = JsonUtils.getBoolean(json.get("alwaysCapture"), "alwaysCapture");
+        else if(json.has("always_capture")) alwaysCapture = JsonUtils.getBoolean(json.get("always_capture"), "always_capture");
+        else alwaysCapture = null;
+
+        // Allow removed/renamed paintings to be remapped to this one.
+        @Nullable final String[] remapping;
+        if(!json.has("mapping")) remapping = null;
+        else {
+            @Nonnull final JsonElement mapping = json.get("mapping");
+            if(mapping.isJsonPrimitive()) remapping = new String[] {mapping.getAsString()};
+            else {
+                remapping = new String[JsonUtils.getJsonArray(mapping, "mapping").size()];
+                for(int i = 0; i < remapping.length; i++) remapping[i] = JsonUtils.getString(mapping.getAsJsonArray().get(i), "mapping["+i+']');
+            }
+        }
+
+        return new JsonPaintingInfo(motive, info, remapping, json.get("rarity"), isTreasure, alwaysCapture);
+    };
+
+    @Nonnull
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeHierarchyAdapter(ITextComponent.class, new ITextComponent.Serializer())
+            .registerTypeHierarchyAdapter(Style.class, new Style.Serializer())
+            .registerTypeAdapterFactory(new EnumTypeAdapterFactory())
+            .registerTypeAdapter(JsonPaintingInfo.class, DESERIALIZER)
+            .create();
+
+    static int nextPaintingId = 0;
+    static void error(@Nonnull final Object... args) {
+        JSONPaintings.LOGGER.error("An error occurred while reading {} in mod with id {}. Skipping file...", args);
+    }
+
+    public static void construct() {
+        // Effectively remove the character limit for motives.
+        EntityPainting.EnumArt.MAX_NAME_LENGTH = Short.MAX_VALUE;
+        // Read painting infos.
+        readMods();
+        readInstance(false);
+        // Turn painting infos into enums.
+        FROM_MOD_JSON.forEach(JsonPaintingInfo::construct);
+        FROM_USER_JSON.forEach(JsonPaintingInfo::construct);
+        // Placement exclusions.
+        /* TODO:
+        PLACEMENT_EXCLUSIONS.forEach(motive -> {
+            @Nullable final EntityPainting.EnumArt art = PaintingHelper.get(motive);
+            if(art != null) ActivePaintingInfo.get(art).isTreasure = true;
+        });
+        */
+    }
+
+    public static void postInit() {
+        // Apply rarities.
+        // This is done later so that all new rarity enums hopefully exist.
+        FROM_MOD_JSON.forEach(JsonPaintingInfo::postInit);
+        FROM_USER_JSON.forEach(JsonPaintingInfo::postInit);
+    }
 
     // reads each mod
     public static void readMods() {
         for(@Nonnull final ModContainer container : Loader.instance().getModList()) {
-            @Nullable final InputStream file = Loader.class.getResourceAsStream(String.format("/assets/%s/paintings/paintings.json", container.getModId().replaceAll("[<>:\"|?*]", "_")));
-            if(file != null) {
-                try(@Nonnull final Reader reader = new InputStreamReader(file)) { read(reader, container, true, false); }
-                //catch here as to not skip other mods' paintings
-                catch(@Nonnull final Exception e) { e.printStackTrace(); }
-            }
+            // Thank you CraftingHelper!
+            CraftingHelper.findFiles(container, "assets/" + container.getModId() + "/paintings/paintings.json", path -> {
+                try(@Nonnull final Reader reader = Files.newBufferedReader(path)) {
+                    activeMod = container;
+                    FROM_MOD_JSON.addAll(Arrays.asList(GSON.fromJson(reader, JsonPaintingInfo[].class)));
+                    return true;
+                }
+                catch(@Nonnull final IOException | JsonParseException e) {
+                    error(path, container.getModId(), e);
+                    return false;
+                }
+                finally {
+                    activeMod = null;
+                }
+            }, null, false, false);
+            // Support 1.21 painting format.
+            CraftingHelper.findFiles(container, "data/" + container.getModId() + "/painting_variant", null, (root, file) -> {
+                try(@Nonnull final Reader reader = Files.newBufferedReader(file)) {
+                    activeMod = container;
+                    activeMotive = container.getModId() + ':' + FilenameUtils.removeExtension(root.relativize(file).toString());
+                    FROM_MOD_JSON.add(GSON.fromJson(reader, JsonPaintingInfo.class));
+                    return true;
+                }
+                catch(@Nonnull final IOException | JsonParseException e) {
+                    error(file, container.getModId(), e);
+                    return false;
+                }
+                finally {
+                    activeMod = null;
+                    activeMotive = null;
+                }
+            }, true, true);
+            // 1.21 uses a tag equivalent of an inverse "is_treasure".
+            /* TODO:
+            CraftingHelper.findFiles(container, "data/minecraft/tags/painting_variant/placeable.json", path -> {
+                try(@Nonnull final Reader reader = Files.newBufferedReader(path)) {
+                    @Nonnull final JsonArray values = JsonUtils.getJsonArray(new JsonParser().parse(reader).getAsJsonObject(), "values");
+                    for(int i = 0; i < values.size(); i++) PLACEMENT_EXCLUSIONS.add(JsonUtils.getString(values.get(i), "values["+i+']'));
+                    return true;
+                }
+                catch(@Nonnull final IOException | JsonParseException e) {
+                    error(path, container.getModId(), e);
+                    return false;
+                }
+            }, null, false, false);
+             */
         }
     }
 
     // reads the minecraft run folder
-    public static void readInstance(final boolean isReload) throws Exception {
-        @Nonnull final File file = new File("paintings", "paintings.json");
-        if(file.exists()) try(@Nonnull final Reader reader = new FileReader(file)) { read(reader, Loader.instance().getIndexedModList().get(JSONPaintings.MODID), false, isReload); }
-    }
-
-    static void read(@Nonnull final Reader reader, @Nonnull final ModContainer container, final boolean isModded, final boolean isReload) throws Exception {
-        @Nonnull final JsonArray jsonArray = new JsonParser().parse(reader).getAsJsonArray();
-        // check that all old paintings are present in the file, as removing paintings is impossible
-        if(isReload && !newMotives.isEmpty() && !StreamSupport.stream(jsonArray.spliterator(), false)
-                .map(JsonElement::getAsJsonObject)
-                .map(json -> JsonUtils.getString(json, "motive"))
-                .collect(Collectors.toSet()).containsAll(newMotives))
-            throw new CommandException("jsonpaintings.command.removedPainting");
-
-        // read paintings from file
-        jsonArray.forEach(jsonIn -> {
-            @Nonnull final JsonObject json = jsonIn.getAsJsonObject();
-            @Nonnull final String motive = JsonUtils.getString(json, "motive");
-            boolean setModId = true;
-
-            // look for existing painting to override
-            @Nullable EntityPainting.EnumArt art = null;
-            for(@Nonnull final EntityPainting.EnumArt artIn : EntityPainting.EnumArt.values()) {
-                if(artIn.title.equals(motive)) {
-                    art = artIn;
-                    art.offsetX = 0;
-                    art.offsetY = 0;
-                    setModId = false;
-                    // override width, this is not recommended
-                    if(json.has("width")) art.sizeX = Math.max(JsonUtils.getInt(json.get("width"), "width") << 4, 16);
-                    // override height, this is not recommended
-                    if(json.has("height")) art.sizeY = Math.max(JsonUtils.getInt(json.get("height"), "height") << 4, 16);
-                    // reset misc json painting properties
-                    IJSONPainting.from(art).setCreative(false);
-                    IJSONPainting.from(art).setHasBackTexture(false);
-                    IJSONPainting.from(art).setHasSideTexture(false);
-                    break;
-                }
+    public static void readInstance(final boolean isReload) {
+        @Nonnull final Path cfg = ASMHandler.paintingsLocation.resolve("paintings.json");
+        if(Files.exists(cfg)) {
+            try(@Nonnull final Reader reader = Files.newBufferedReader(cfg)) {
+                FROM_USER_JSON.addAll(Arrays.asList(GSON.fromJson(reader, JsonPaintingInfo[].class)));
             }
-
-            // create new painting if it's not an override
-            if(art == null) {
-                if((art = EnumHelper.addArt(
-                        "JSON_PAINTINGS_GENERATED_ID" + nextPaintingId++, motive,
-                        json.has("width") ? Math.max(JsonUtils.getInt(json.get("width"), "width") << 4, 16) : 16,
-                        json.has("height") ? Math.max(JsonUtils.getInt(json.get("height"), "height") << 4, 16) : 16, 0, 0)) != null)
-                    newMotives.add(motive);
-
-                // should never pass, but exists because EnumHelper is nullable
-                else {
-                    nextPaintingId--;
-                    throw new IllegalArgumentException(
-                            "A critical error has occurred while creating painting with the motive: " + motive);
-                }
+            catch(@Nonnull final IOException | JsonParseException e) {
+                JSONPaintings.LOGGER.error(e);
             }
+        }
 
-            // assign textures
-            @Nonnull final IJSONPainting painting = IJSONPainting.from(art);
-            @Nonnull final String frontTexturePath = isModded ? "paintings/" + motive.toLowerCase() : motive.toLowerCase();
-            if(json.has("textures")) {
-                @Nonnull final JsonObject textures = JsonUtils.getJsonObject(json.get("textures"), "textures");
-                @Nonnull final String front = textures.has("front")
-                        ? JsonUtils.getString(textures.get("front"), "front")
-                        : container.getModId() + ":" + frontTexturePath;
-
-                @Nonnull final String back;
-                if(!textures.has("back")) back = JSONPaintings.MODID + ":paintings/back";
-                else {
-                    back = JsonUtils.getString(textures.get("back"), "back");
-                    painting.setHasBackTexture(true);
-                    painting.setHasSideTexture(true);
-                }
-
-                @Nonnull final String side;
-                if(!textures.has("side")) side = back;
-                else {
-                    side = JsonUtils.getString(textures.get("side"), "side");
-                    painting.setHasSideTexture(true);
-                }
-
-                // allow for texture locations to reference other textures (example -> "back": "#front")
-                @Nonnull final ImmutableMap<String, String> textureMap = ImmutableMap.of("front", front, "back", back, "side", side);
-                painting.setFrontTexture(buildLocation(front.charAt(0) == '#' ? textureMap.get(front.substring(1)) : front));
-                painting.setBackTexture(buildLocation(back.charAt(0) == '#' ? textureMap.get(back.substring(1)) : back));
-                painting.setSideTexture(buildLocation(side.charAt(0) == '#' ? textureMap.get(side.substring(1)) : side));
-            }
-
-            // assign default textures
-            else {
-                painting.setFrontTexture(buildLocation(container.getModId() + ":" + frontTexturePath));
-                painting.setBackTexture(DEFAULT_BACK_TEXTURE);
-                painting.setSideTexture(DEFAULT_BACK_TEXTURE);
-            }
-
-            // fix server issue with painting title sizes
-            if(motive.length() > EntityPainting.EnumArt.MAX_NAME_LENGTH)
-                EntityPainting.EnumArt.MAX_NAME_LENGTH = motive.length();
-
-            // exclusive paintings
-            if(json.has("isCreative")) {
-                painting.setCreative(JsonUtils.getBoolean(json.get("isCreative"), "isCreative"));
-                if(painting.isCreative()) painting.setAlwaysCapture(true);
-            }
-
-            // hardcoded paintings
-            else painting.setAlwaysCapture(false);
-            if(json.has("alwaysCapture")) painting.setAlwaysCapture(JsonUtils.getBoolean(json.get("alwaysCapture"), "alwaysCapture"));
-
-            // mod id (or JSON Paintings if added via main config file)
-            if(setModId) {
-                painting.setModName(container.getName());
-                MODID_LOOKUP.put(art, container.getModId());
-            }
-
-            // painting rarity
-            if(json.has("rarity")) painting.setRarity(RarityUtils.parse(json.get("rarity")));
-
-            // painting mapping
-            if(json.has("mapping")) {
-                @Nonnull final JsonElement mappingJson = json.get("mapping");
-                if(mappingJson.isJsonPrimitive()) PAINTING_REMAPS.put(mappingJson.getAsString(), art);
-                else {
-                    @Nonnull final EntityPainting.EnumArt finalArt = art;
-                    JsonUtils.getJsonArray(mappingJson, "mapping").forEach(mapping -> PAINTING_REMAPS.put(mapping.getAsString(), finalArt));
-                }
-            }
-
-            // special mod name (i.e. the name of the modpack adding the painting)
-            // instead of this functionality being added, try adding your paintings via Resource Mod Loader: https://www.curseforge.com/minecraft/mc-mods/resource-mod-loader
-            // if(json.has("modName")) painting.setModName(JsonUtils.getString(json.get("modName"), "modName"));
-
-            painting.setUseSpecialRenderer(true);
-        });
+        // TODO: support painting datapacks for 1.21+
     }
 
     @Nonnull
-    static ResourceLocation buildLocation(@Nonnull String str) {
+    static ResourceLocation buildLocation(@Nonnull final String str) {
+        return buildLocation(str, "textures");
+    }
+
+    @Nonnull
+    static ResourceLocation buildLocation(@Nonnull final String str, @Nonnull final String parent) {
         final ResourceLocation loc = new ResourceLocation(str);
-        return new ResourceLocation(loc.getNamespace(), "textures/" + loc.getPath() + ".png");
+        return new ResourceLocation(loc.getNamespace(), parent + '/' + loc.getPath() + ".png");
+    }
+
+    @Nonnull
+    static String frontTexturePath(@Nonnull final PaintingInfo info, @Nonnull final String motive) {
+        return info.modId + ':' + (!JSONPaintings.MODID.equals(info.modId) ? "paintings/" + motive.toLowerCase() : motive.toLowerCase());
     }
 
     @Nonnull
     static TextFormatting getFormatColor(@Nonnull final JsonObject json) {
         @Nonnull final String colorKey = JsonUtils.getString(json, "color");
         return Optional.ofNullable(TextFormatting.getValueByName(colorKey)).orElseGet(() -> Arrays.stream(TextFormatting.values()).filter(format -> format.toString().equals(colorKey)).findFirst()
-                .orElseThrow(() -> new NullPointerException("Unknown color: \"" + colorKey + "\", see the following page for a list of all valid colors: https://minecraft.wiki/w/Formatting_codes#Color_codes")));
+                .orElseThrow(() -> new JsonParseException("Unknown color: \"" + colorKey + "\", see the following page for a list of all valid colors: https://minecraft.wiki/w/Formatting_codes#Color_codes")));
     }
 }

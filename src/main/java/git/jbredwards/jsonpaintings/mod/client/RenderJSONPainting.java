@@ -5,7 +5,8 @@
 
 package git.jbredwards.jsonpaintings.mod.client;
 
-import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
+import git.jbredwards.jsonpaintings.api.PaintingHelper;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -36,8 +37,8 @@ public class RenderJSONPainting extends RenderPainting
 
     @Override
     public void doRender(@Nonnull final EntityPainting entity, final double x, final double y, final double z, final float entityYaw, final float partialTicks) {
-        final IJSONPainting painting = IJSONPainting.from(entity.art);
-        if(!painting.useSpecialRenderer()) {
+        @Nonnull final ActivePaintingInfo painting = ActivePaintingInfo.get(entity.art);
+        if(painting.frontTexture == null && painting.backTexture == null && painting.sideTexture == null) {
             super.doRender(entity, x, y, z, entityYaw, partialTicks);
             return;
         }
@@ -67,10 +68,10 @@ public class RenderJSONPainting extends RenderPainting
         if(!renderOutlines) renderName(entity, x, y, z);
     }
 
-    protected void renderPainting(@Nonnull final EntityPainting entity, @Nonnull final IJSONPainting painting) {
-        final int front = getGlTextureId(painting.getFrontTexture());
-        final int back = getGlTextureId(painting.getBackTexture());
-        final int side = getGlTextureId(painting.getSideTexture());
+    protected void renderPainting(@Nonnull final EntityPainting entity, @Nonnull final ActivePaintingInfo painting) {
+        final int front = getGlTextureId(painting.frontTexture != null ? painting.frontTexture : getEntityTexture(entity));
+        final int back = getGlTextureId(PaintingHelper.getBackTexture(painting));
+        final int side = getGlTextureId(PaintingHelper.getSideTexture(painting));
 
         final int width = entity.art.sizeX >> 4;
         final int height = entity.art.sizeY >> 4;
@@ -78,19 +79,28 @@ public class RenderJSONPainting extends RenderPainting
         final int centerY = -entity.art.sizeY >> 1;
         final BufferBuilder buffer = Tessellator.getInstance().getBuffer();
 
+        final float frontWidth = painting.frontTexture == null ? 16 : width;
+        final float frontHeight = painting.frontTexture == null ? 16 : height;
+        final float frontU = painting.frontTexture == null ? painting.getXOffset() / 16f : 0;
+        final float frontV = painting.frontTexture == null ? painting.getYOffset() / 16f : 0;
+
         for(int x = 0; x < width; x++) {
             for(int y = 0; y < height; y++) {
                 final float minX = centerX + (x << 4);
                 final float maxX = centerX + ((x + 1) << 4);
                 final float minY = centerY + (y << 4);
                 final float maxY = centerY + ((y + 1) << 4);
+                final float minU = (float)(width - x) / width;
+                final float maxU = (float)(width - x - 1) / width;
+                final float minV = (float)(height - y) / height;
+                final float maxV = (float)(height - y - 1) / height;
                 setLightmap(entity, (maxX + minX) / 2, (maxY + minY) / 2);
 
                 //front
-                final float frontMinU = (float)(width - x) / width;
-                final float frontMaxU = (float)(width - x - 1) / width;
-                final float frontMinV = (float)(height - y) / height;
-                final float frontMaxV = (float)(height - y - 1) / height;
+                final float frontMinU = (frontU + width - x) / frontWidth;
+                final float frontMaxU = (frontU + width - x - 1) / frontWidth;
+                final float frontMinV = (frontV + height - y) / frontHeight;
+                final float frontMaxV = (frontV + height - y - 1) / frontHeight;
                 GlStateManager.bindTexture(front);
                 buffer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
                 buffer.pos(maxX, minY, -0.5).tex(frontMaxU, frontMinV).normal(0, 0, -1).endVertex();
@@ -100,10 +110,11 @@ public class RenderJSONPainting extends RenderPainting
                 Tessellator.getInstance().draw();
 
                 //back
-                final float backMinU = painting.hasBackTexture() ? frontMinU : 1;
-                final float backMaxU = painting.hasBackTexture() ? frontMaxU : 0;
-                final float backMinV = painting.hasBackTexture() ? frontMinV : 1;
-                final float backMaxV = painting.hasBackTexture() ? frontMaxV : 0;
+                final boolean hasBackTexture = painting.backTexture != null;
+                final float backMinU = hasBackTexture ? minU : 1;
+                final float backMaxU = hasBackTexture ? maxU : 0;
+                final float backMinV = hasBackTexture ? minV : 1;
+                final float backMaxV = hasBackTexture ? maxV : 0;
                 GlStateManager.bindTexture(back);
                 buffer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
                 buffer.pos(maxX, maxY, 0.5).tex(backMaxU, backMaxV).normal(0, 0, 1).endVertex();
@@ -113,12 +124,13 @@ public class RenderJSONPainting extends RenderPainting
                 Tessellator.getInstance().draw();
 
                 //side values
-                final float sideMinU = painting.hasSideTexture() ? frontMinU : 1;
-                final float sideMaxU = painting.hasSideTexture() ? frontMaxU : 0;
-                final float sideMinV = painting.hasSideTexture() ? frontMinV : 1;
-                final float sideMaxV = painting.hasSideTexture() ? frontMaxV : 0;
-                final float sideWidth = painting.hasSideTexture() ? 1f / entity.art.sizeX : 0.0625f;
-                final float sideHeight = painting.hasSideTexture() ? 1f / entity.art.sizeY : 0.0625f;
+                final boolean hasSideTexture = hasBackTexture || painting.sideTexture != null;
+                final float sideMinU = hasSideTexture ? minU : 1;
+                final float sideMaxU = hasSideTexture ? maxU : 0;
+                final float sideMinV = hasSideTexture ? minV : 1;
+                final float sideMaxV = hasSideTexture ? maxV : 0;
+                final float sideWidth = hasSideTexture ? 1f / entity.art.sizeX : 0.0625f;
+                final float sideHeight = hasSideTexture ? 1f / entity.art.sizeY : 0.0625f;
                 boolean drawSide = false;
 
                 //top

@@ -5,6 +5,8 @@
 
 package git.jbredwards.jsonpaintings.mod.common.capability;
 
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
+import git.jbredwards.jsonpaintings.api.PaintingHelper;
 import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import git.jbredwards.jsonpaintings.mod.common.util.JSONHandler;
 import net.minecraft.entity.item.EntityPainting;
@@ -42,6 +44,11 @@ public interface IArtCapability
 
     @Nullable EntityPainting.EnumArt getArt();
     void setArt(@Nullable final EntityPainting.EnumArt artIn);
+
+    @Nonnull
+    static Optional<ActivePaintingInfo> getInfo(@Nullable final ICapabilityProvider provider) {
+        return getOptional(provider).map(ActivePaintingInfo::get);
+    }
 
     @Nonnull
     static Optional<EntityPainting.EnumArt> getOptional(@Nullable final ICapabilityProvider provider) {
@@ -127,7 +134,8 @@ public interface IArtCapability
 
         @Nullable
         static EntityPainting.EnumArt getFromTitle(@Nonnull final String title, @Nonnull final Consumer<EntityPainting.EnumArt> mapper) {
-            for(@Nonnull final EntityPainting.EnumArt art : EntityPainting.EnumArt.values()) if(art.title.equals(title)) return art;
+            @Nullable final EntityPainting.EnumArt art = PaintingHelper.PAINTINGS.get(title);
+            if(art != null) return art;
 
             // try remapping
             @Nullable final EntityPainting.EnumArt mapped = JSONHandler.PAINTING_REMAPS.get(title);

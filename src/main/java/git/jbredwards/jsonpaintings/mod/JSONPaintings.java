@@ -9,7 +9,6 @@ import git.jbredwards.jsonpaintings.mod.client.RenderJSONPainting;
 import git.jbredwards.jsonpaintings.mod.common.capability.IArtCapability;
 import git.jbredwards.jsonpaintings.mod.common.commands.CommandJSONPaintings;
 import git.jbredwards.jsonpaintings.mod.common.compat.top.TOPHandler;
-import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
 import git.jbredwards.jsonpaintings.mod.common.util.JSONHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
@@ -21,10 +20,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.*;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.*;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -45,6 +41,11 @@ public final class JSONPaintings
     @Nonnull public static final String MODID = Tags.MOD_ID, NAME = Tags.NAME, VERSION = Tags.VERSION;
     @Nonnull public static final Logger LOGGER = LogManager.getFormatterLogger(NAME);
     public static boolean IS_PSG_INSTALLED, IS_JEI_INSTALLED;
+
+    @Mod.EventHandler
+    public void construct(@Nonnull final FMLConstructionEvent event) {
+        JSONHandler.construct();
+    }
 
     @Mod.EventHandler
     public void preInit(@Nonnull final FMLPreInitializationEvent event) {
@@ -78,14 +79,8 @@ public final class JSONPaintings
     }
 
     @Mod.EventHandler
-    public void postInit(@Nonnull final FMLPostInitializationEvent event) throws Exception {
-        JSONHandler.readMods();
-        JSONHandler.readInstance(false);
-        // set modid & mod name for vanilla's paintings
-        for(int i = 0; i < 26; i++) {
-            JSONHandler.MODID_LOOKUP.put(EntityPainting.EnumArt.values()[i], "minecraft");
-            IJSONPainting.from(EntityPainting.EnumArt.values()[i]).setModName("Minecraft");
-        }
+    public void postInit(@Nonnull final FMLPostInitializationEvent event) {
+        JSONHandler.postInit();
     }
 
     @Mod.EventHandler

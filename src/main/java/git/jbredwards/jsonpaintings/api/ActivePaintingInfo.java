@@ -34,7 +34,7 @@ public final class ActivePaintingInfo extends PaintingInfo
     }
 
     /**
-     * @return The {@code AbstractPaintingInfo} tied to the provided {@code EnumArt} instance.
+     * @return The {@code ActivePaintingInfo} tied to the provided {@code EnumArt} instance.
      * @author jbred
      */
     @ApiStatus.AvailableSince("1.5.0")
