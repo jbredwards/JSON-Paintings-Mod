@@ -36,6 +36,7 @@ public final class ASMHandler implements IFMLLoadingPlugin
                 new EnumArtTransformer(),
                 new ItemTransformer(),
                 //mod compat
+                new HwylaTransformer(),
                 new PSGRevampedClientTransformer(),
                 new PSGRevampedServerTransformer(),
                 new TwilightForestTransformer()

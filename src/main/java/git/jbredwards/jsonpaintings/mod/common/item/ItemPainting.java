@@ -124,7 +124,7 @@ public class ItemPainting extends ItemHangingEntity
     public void getSubItems(@Nonnull final CreativeTabs tab, @Nonnull final NonNullList<ItemStack> items) {
         if(isInCreativeTab(tab)) {
             items.add(new ItemStack(this));
-            if(tab != CreativeTabs.SEARCH && tab != PaintingsTab.INSTANCE) return;
+            if(tab == getCreativeTab()) return;
             // add all painting types to the creative tab
             for(@Nonnull final EntityPainting.EnumArt art : EntityPainting.EnumArt.values()) {
                 items.add(PaintingHelper.write(new ItemStack(this), art));
