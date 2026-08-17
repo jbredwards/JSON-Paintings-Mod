@@ -24,10 +24,12 @@ import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -212,6 +214,7 @@ public final class JSONHandler
         try {
             @Nullable final File[] packs = ASMHandler.paintingsLocation.resolve("packs").toFile().listFiles();
             if(packs != null) for(@Nonnull final File pack : packs) {
+                @Nonnull final String modName = gatherPackName(pack);
                 for(@Nonnull final String domain : gatherPackDomains(pack)) {
                     @Nonnull final String modId = domain.substring(0, domain.length() - 1);
                     // Using dummy mod containers, so I can re-use the `readMods()` logic.
@@ -225,7 +228,7 @@ public final class JSONHandler
                         @Nonnull
                         @Override
                         public String getName() {
-                            return JSONPaintings.NAME;
+                            return modName;
                         }
 
                         @Nonnull
@@ -300,5 +303,40 @@ public final class JSONHandler
             }
         }
         return domains;
+    }
+
+    @Nonnull
+    private static String gatherPackName(@Nonnull final File pack) throws IOException {
+        if(pack.isDirectory()) {
+            @Nonnull final String name = pack.getName();
+            return name.substring(0, name.length() - 1);
+        }
+        // Try getting the name from mod file.
+        else try(@Nonnull final ZipFile packZip = new ZipFile(pack)) {
+            // Fabric mod.
+            @Nullable ZipEntry modInfo = packZip.getEntry("fabric.mod.json");
+            if(modInfo != null) try(@Nonnull final Reader reader = new InputStreamReader(packZip.getInputStream(modInfo))) {
+                @Nonnull final JsonObject json = new JsonParser().parse(reader).getAsJsonObject();
+                try { return JsonUtils.getString(json, "name"); }
+                catch(@Nonnull final JsonParseException ignored) {}
+            }
+            // Forge mod.
+            else {
+                modInfo = packZip.getEntry("META-INF/mods.toml");
+                if(modInfo == null) modInfo = packZip.getEntry("META-INF/neoforge.mods.toml");
+                if(modInfo != null) try(@Nonnull final InputStream is = packZip.getInputStream(modInfo)) {
+                    for(@Nonnull final String line : IOUtils.readLines(is, StandardCharsets.UTF_8)) {
+                        final int begin = line.indexOf('=');
+                        if(begin != -1 && line.trim().startsWith("displayName")) {
+                            @Nonnull final JsonElement json = new JsonParser().parse(line.substring(begin + 1));
+                            try { return JsonUtils.getString(json, "displayName"); }
+                            catch(@Nonnull final JsonParseException ignored) { break; }
+                        }
+                    }
+                }
+            }
+        }
+        // Use file name.
+        return FilenameUtils.removeExtension(pack.getName());
     }
 }

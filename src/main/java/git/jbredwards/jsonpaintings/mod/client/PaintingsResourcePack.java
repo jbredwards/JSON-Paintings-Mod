@@ -30,9 +30,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -58,15 +55,12 @@ public class PaintingsResourcePack extends FolderResourcePack implements ISelect
     public void onResourceManagerReload(@Nonnull final IResourceManager resourceManager, @Nonnull final Predicate<IResourceType> resourcePredicate) {
         if(resourcePredicate.test(VanillaResourceType.LANGUAGES) || resourcePredicate.test(VanillaResourceType.TEXTURES)) {
             close();
-            try(@Nonnull final DirectoryStream<Path> packs = Files.newDirectoryStream(ASMHandler.paintingsLocation.resolve("packs"))) {
-                for(@Nonnull final Path pack : packs) {
-                    @Nonnull final IResourcePack resourcePack = Files.isDirectory(pack) ? new FolderResourcePack(pack.toFile()) : new FileResourcePack(pack.toFile());
-                    if(!resourcePack.getResourceDomains().isEmpty()) paintingPacks.add(resourcePack);
-                    else if(resourcePack instanceof Closeable) IOUtils.closeQuietly((Closeable)resourcePack);
-                }
+            @Nullable final File[] packs = ASMHandler.paintingsLocation.resolve("packs").toFile().listFiles();
+            if(packs != null) for(@Nonnull final File pack : packs) {
+                @Nonnull final IResourcePack resourcePack = pack.isDirectory() ? new FolderResourcePack(pack) : new FileResourcePack(pack);
+                if(!resourcePack.getResourceDomains().isEmpty()) paintingPacks.add(resourcePack);
+                else if(resourcePack instanceof Closeable) IOUtils.closeQuietly((Closeable)resourcePack);
             }
-
-            catch(@Nonnull final IOException ignored) {}
         }
     }
 
