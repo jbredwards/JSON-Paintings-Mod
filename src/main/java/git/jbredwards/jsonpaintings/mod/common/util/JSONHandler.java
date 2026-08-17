@@ -82,7 +82,8 @@ public final class JSONHandler
         if(json.has("author")) info.author = ctx.deserialize(json.get("author"), ITextComponent.class);
         if(json.has("title")) info.title = ctx.deserialize(json.get("title"), ITextComponent.class);
         if(json.has("item_model")) {
-            @Nonnull final String itemModel = JsonUtils.getString(json.get("item_model"), "item_model");
+            @Nonnull String itemModel = JsonUtils.getString(json.get("item_model"), "item_model");
+            if(itemModel.indexOf(':') == -1) itemModel = info.modId + ':' + itemModel;
             info.itemModel = itemModel.indexOf('#') == -1 ? new ModelResourceLocation(itemModel, "inventory") : new ModelResourceLocation(itemModel);
         }
 
