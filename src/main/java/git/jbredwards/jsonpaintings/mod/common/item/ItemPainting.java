@@ -31,6 +31,7 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -123,7 +124,7 @@ public class ItemPainting extends ItemHangingEntity
     public void getSubItems(@Nonnull final CreativeTabs tab, @Nonnull final NonNullList<ItemStack> items) {
         if(isInCreativeTab(tab)) {
             items.add(new ItemStack(this));
-
+            if(tab != CreativeTabs.SEARCH && tab != PaintingsTab.INSTANCE) return;
             // add all painting types to the creative tab
             for(@Nonnull final EntityPainting.EnumArt art : EntityPainting.EnumArt.values()) {
                 items.add(PaintingHelper.write(new ItemStack(this), art));
@@ -172,5 +173,11 @@ public class ItemPainting extends ItemHangingEntity
     public EnumRarity getRarity(@Nonnull final ItemStack stack) {
         @Nonnull final IRarity rarity = getForgeRarity(stack);
         return rarity instanceof EnumRarity ? (EnumRarity)rarity : super.getRarity(stack);
+    }
+
+    @Nonnull
+    @Override
+    public CreativeTabs[] getCreativeTabs() {
+        return ArrayUtils.add(super.getCreativeTabs(), PaintingsTab.INSTANCE);
     }
 }
