@@ -6,11 +6,11 @@
 package git.jbredwards.jsonpaintings.mod.common.item;
 
 import com.mcf.davidee.paintinggui.handler.PlacePaintingEventHandler;
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
 import git.jbredwards.jsonpaintings.api.PaintingHelper;
 import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import git.jbredwards.jsonpaintings.mod.common.capability.IArtCapability;
 import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
-import git.jbredwards.jsonpaintings.mod.common.util.JSONHandler;
 import io.netty.util.internal.IntegerHolder;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
@@ -24,10 +24,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.common.IRarity;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.tuple.Pair;
@@ -36,8 +37,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Predicate;
 
 /**
  *
@@ -127,13 +126,7 @@ public class ItemPainting extends ItemHangingEntity
 
             // add all painting types to the creative tab
             for(@Nonnull final EntityPainting.EnumArt art : EntityPainting.EnumArt.values()) {
-                @Nonnull final ItemStack stack = new ItemStack(this);
-                @Nullable final IArtCapability cap = IArtCapability.get(stack);
-
-                if(cap != null) {
-                    cap.setArt(art);
-                    items.add(stack);
-                }
+                items.add(PaintingHelper.write(new ItemStack(this), art));
             }
         }
     }
@@ -141,29 +134,43 @@ public class ItemPainting extends ItemHangingEntity
     @SideOnly(Side.CLIENT)
     @Override
     public void addInformation(@Nonnull final ItemStack stack, @Nullable final World worldIn, @Nonnull final List<String> tooltip, @Nonnull final ITooltipFlag flagIn) {
-        IArtCapability.getOptional(stack).ifPresent(art -> tooltip.add(I18n.format("jsonpaintings.itemTooltip", I18n.format(art.title), art.sizeX >> 4, art.sizeY >> 4)));
+        @Nullable final EntityPainting.EnumArt art = PaintingHelper.read(stack);
+        if(art != null) {
+            @Nonnull final ActivePaintingInfo info = ActivePaintingInfo.get(art);
+
+            tooltip.add(PaintingHelper.getTitle(info, art.title).getFormattedText());
+            if(info.author != null) tooltip.add(info.author.getFormattedText());
+
+            tooltip.add(TextFormatting.WHITE + I18n.format(JSONPaintings.MODID + ".itemTooltipDim", art.sizeX >> 4, art.sizeY >> 4));
+        }
     }
 
     @Nullable
     @Override
     public String getCreatorModId(@Nonnull final ItemStack stack) {
         @Nullable final ResourceLocation loc = getRegistryName();
-        return IArtCapability.getInfo(stack).map(PaintingHelper::getModId).orElse(loc != null ? loc.getNamespace() : null);
-    }
 
-    @Nonnull
-    protected IRarity getRarity(@Nonnull final ItemStack stack, @Nonnull final Predicate<IRarity> condition) {
-        return IArtCapability.getOptional(stack).map(art -> {
-            @Nullable final IRarity rarity = IJSONPainting.from(art).getRarity();
-            return condition.test(rarity) ? rarity : IJSONPainting.from(art).isCreative() ? EnumRarity.EPIC : EnumRarity.UNCOMMON;
-        }).orElseGet(() -> super.getRarity(stack));
+        @Nullable final EntityPainting.EnumArt art = PaintingHelper.read(stack);
+        if(art == null) return loc == null ? null : loc.getNamespace();
+
+        @Nonnull final String modId = PaintingHelper.getModId(ActivePaintingInfo.get(art));
+        return Loader.isModLoaded(modId) ? modId : JSONPaintings.MODID;
     }
 
     @Nonnull
     @Override
-    public IRarity getForgeRarity(@Nonnull final ItemStack stack) { return getRarity(stack, Objects::nonNull); }
+    public IRarity getForgeRarity(@Nonnull final ItemStack stack) {
+        @Nullable final EntityPainting.EnumArt art = PaintingHelper.read(stack);
+        if(art == null) return super.getRarity(stack);
+
+        @Nullable final IRarity rarity = ActivePaintingInfo.get(art).rarity;
+        return rarity != null ? rarity : super.getRarity(stack);
+    }
 
     @Nonnull
     @Override
-    public EnumRarity getRarity(@Nonnull final ItemStack stack) { return (EnumRarity)getRarity(stack, rarity -> rarity instanceof EnumRarity); }
+    public EnumRarity getRarity(@Nonnull final ItemStack stack) {
+        @Nonnull final IRarity rarity = getForgeRarity(stack);
+        return rarity instanceof EnumRarity ? (EnumRarity)rarity : super.getRarity(stack);
+    }
 }

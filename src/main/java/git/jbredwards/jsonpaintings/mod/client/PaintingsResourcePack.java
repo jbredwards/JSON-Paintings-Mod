@@ -5,27 +5,36 @@
 
 package git.jbredwards.jsonpaintings.mod.client;
 
-import com.google.common.collect.Sets;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import git.jbredwards.jsonpaintings.mod.asm.ASMHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.RenderPainting;
-import net.minecraft.client.resources.FolderResourcePack;
-import net.minecraft.client.resources.IResource;
-import net.minecraft.client.resources.IResourceManager;
-import net.minecraft.client.resources.ResourcePackFileNotFoundException;
+import net.minecraft.client.resources.*;
+import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.resource.IResourceType;
+import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
+import net.minecraftforge.client.resource.VanillaResourceType;
 import net.minecraftforge.fml.common.FMLContainerHolder;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Set;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Allows modpack developers to add their own painting textures
@@ -33,13 +42,32 @@ import java.util.Set;
  *
  */
 @SideOnly(Side.CLIENT)
-public class PaintingsResourcePack extends FolderResourcePack implements FMLContainerHolder
+public class PaintingsResourcePack extends FolderResourcePack implements ISelectiveResourceReloadListener, FMLContainerHolder, Closeable
 {
-    @Nonnull
-    protected final ModContainer container;
+    @Nonnull protected final List<IResourcePack> paintingPacks;
+    @Nonnull protected final ModContainer container;
+
     public PaintingsResourcePack(@Nonnull final ModContainer containerIn) {
         super(ASMHandler.paintingsLocation.toFile());
+        paintingPacks = new ArrayList<>();
         container = containerIn;
+        ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(this);
+    }
+
+    @Override
+    public void onResourceManagerReload(@Nonnull final IResourceManager resourceManager, @Nonnull final Predicate<IResourceType> resourcePredicate) {
+        if(resourcePredicate.test(VanillaResourceType.LANGUAGES) || resourcePredicate.test(VanillaResourceType.TEXTURES)) {
+            close();
+            try(@Nonnull final DirectoryStream<Path> packs = Files.newDirectoryStream(ASMHandler.paintingsLocation.resolve("packs"))) {
+                for(@Nonnull final Path pack : packs) {
+                    @Nonnull final IResourcePack resourcePack = Files.isDirectory(pack) ? new FolderResourcePack(pack.toFile()) : new FileResourcePack(pack.toFile());
+                    if(!resourcePack.getResourceDomains().isEmpty()) paintingPacks.add(resourcePack);
+                    else if(resourcePack instanceof Closeable) IOUtils.closeQuietly((Closeable)resourcePack);
+                }
+            }
+
+            catch(@Nonnull final IOException ignored) {}
+        }
     }
 
     @Nonnull
@@ -51,11 +79,20 @@ public class PaintingsResourcePack extends FolderResourcePack implements FMLCont
     @Nonnull
     @Override
     public Set<String> getResourceDomains() {
-        return Sets.newHashSet(JSONPaintings.MODID);
+        @Nonnull final Set<String> domains = new HashSet<>();
+        domains.add(JSONPaintings.MODID);
+
+        for(@Nonnull final IResourcePack pack : paintingPacks) domains.addAll(pack.getResourceDomains());
+        return domains;
     }
 
     @Override
     public boolean resourceExists(@Nonnull final ResourceLocation location) {
+        @Nullable final ResourceLocation langLocation = toModernLang(location);
+        for(@Nonnull final IResourcePack pack : paintingPacks) {
+            if(pack.resourceExists(location) || langLocation != null && pack.resourceExists(langLocation)) return true;
+        }
+
         return location.getNamespace().equals(JSONPaintings.MODID) && (
                 "textures/paintings/back.png".equals(location.getPath()) ||
                 "pack.mcmeta".equals(location.getPath()) || hasResourceName(location.getPath()));
@@ -64,6 +101,25 @@ public class PaintingsResourcePack extends FolderResourcePack implements FMLCont
     @Nonnull
     @Override
     public InputStream getInputStream(@Nonnull final ResourceLocation location) throws IOException {
+        // Convert json-based lang format to 1.12's format.
+        @Nullable final ResourceLocation langLocation = toModernLang(location);
+        for(@Nonnull final IResourcePack pack : paintingPacks) {
+            if(pack.resourceExists(location)) return pack.getInputStream(location);
+            else if(langLocation != null && pack.resourceExists(langLocation)) {
+                @Nonnull final JsonObject modernLang;
+                try(@Nonnull final Reader reader = new InputStreamReader(pack.getInputStream(langLocation))) {
+                    modernLang = new JsonParser().parse(reader).getAsJsonObject();
+                }
+
+                @Nonnull final StringBuilder builder = new StringBuilder();
+                for(@Nonnull final Map.Entry<String, JsonElement> entry : modernLang.entrySet()) {
+                    builder.append(entry.getKey()).append('=').append(JsonUtils.getString(entry.getValue(), entry.getKey())).append("\n");
+                }
+
+                return new ByteArrayInputStream(builder.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        }
+
         if(location.getNamespace().equals(JSONPaintings.MODID)) return getInputStreamByName(location.getPath());
         else throw new ResourcePackFileNotFoundException(resourcePackFile, "Invalid modid");
     }
@@ -97,5 +153,17 @@ public class PaintingsResourcePack extends FolderResourcePack implements FMLCont
             // Search folder.
             default: return super.getInputStreamByName(name);
         }
+    }
+
+    @Override
+    public void close() {
+        for(@Nonnull final IResourcePack pack : paintingPacks) if(pack instanceof Closeable) IOUtils.closeQuietly((Closeable)pack);
+        paintingPacks.clear();
+    }
+
+    @Nullable
+    private static ResourceLocation toModernLang(@Nonnull final ResourceLocation location) {
+        @Nonnull final String path = location.getPath();
+        return path.endsWith(".lang") ? new ResourceLocation(location.getNamespace(), path.substring(0, path.length() - 5) + ".json") : null;
     }
 }

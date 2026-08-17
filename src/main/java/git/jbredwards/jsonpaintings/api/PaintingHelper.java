@@ -14,7 +14,9 @@ import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.common.IRarity;
 import org.jetbrains.annotations.ApiStatus;
@@ -81,9 +83,11 @@ public final class PaintingHelper
      * @author jbred
      */
     @ApiStatus.AvailableSince("1.5.0")
-    public static void write(@Nonnull final ItemStack to, @Nullable final EntityPainting.EnumArt art) {
+    @Nonnull
+    public static ItemStack write(@Nonnull final ItemStack to, @Nullable final EntityPainting.EnumArt art) {
         @Nullable final IArtCapability cap = IArtCapability.get(Preconditions.checkNotNull(to));
         if(cap != null) cap.setArt(art);
+        return to;
     }
 
     /**
@@ -138,7 +142,7 @@ public final class PaintingHelper
     @ApiStatus.AvailableSince("1.5.0")
     @Nonnull
     public static IRarity getRarity(@Nonnull final PaintingInfo info) {
-        return info.rarity != null ? info.rarity : info.isTreasure ? EnumRarity.EPIC : EnumRarity.UNCOMMON;
+        return info.rarity != null ? info.rarity : EnumRarity.COMMON;
     }
 
     /**
@@ -150,6 +154,7 @@ public final class PaintingHelper
     @Nonnull
     public static ITextComponent getTitle(@Nonnull final PaintingInfo info, @Nonnull final String motive) {
         Preconditions.checkNotNull(motive);
-        return info.title != null ? info.title : new TextComponentTranslation(motive);
+        return info.title != null ? info.title
+                : new TextComponentTranslation(motive).setStyle(new Style().setColor(TextFormatting.YELLOW));
     }
 }

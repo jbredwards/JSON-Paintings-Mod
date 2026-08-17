@@ -1,4 +1,4 @@
-jsonpaintings.itemTooltip=%s [%dx%d]
+jsonpaintings.itemTooltipDim=%dx%d
 
 # Command
 jsonpaintings.command.dedicatedServer=Paintings on a dedicated server must be reloaded by restarting the server

@@ -95,7 +95,7 @@ public abstract class PaintingInfo
 
     /**
      * The rarity of the painting (cosmetic only).
-     * <br> Uses {@link net.minecraft.item.EnumRarity#UNCOMMON} if null.
+     * <br> Uses {@link net.minecraft.item.EnumRarity#COMMON} if null.
      */
     @ApiStatus.AvailableSince("1.5.0")
     @Nullable

@@ -5,14 +5,14 @@
 
 package git.jbredwards.jsonpaintings.mod.common.compat.top;
 
-import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
+import git.jbredwards.jsonpaintings.api.PaintingHelper;
 import mcjty.theoneprobe.TheOneProbe;
 import mcjty.theoneprobe.Tools;
 import mcjty.theoneprobe.api.*;
 import mcjty.theoneprobe.config.Config;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.init.Items;
-import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
@@ -22,7 +22,6 @@ import net.minecraft.util.text.TextComponentTranslation;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.util.Optional;
 
 /**
  *
@@ -41,21 +40,30 @@ public final class TOPHandler
         TheOneProbe.theOneProbeImp.registerEntityDisplayOverride((mode, probeInfo, player, world, entity, data) -> {
             if(entity instanceof EntityPainting) {
                 @Nonnull final EntityPainting.EnumArt art = ((EntityPainting)entity).art;
-                @Nonnull final ITextComponent motive = new TextComponentTranslation(art.title)
-                        .setStyle(new Style().setColor(Optional.ofNullable(IJSONPainting.from(art).getRarity())
-                        .orElseGet(() -> IJSONPainting.from(art).isCreative() ? EnumRarity.EPIC : EnumRarity.UNCOMMON).getColor()));
+                @Nonnull final ActivePaintingInfo info = ActivePaintingInfo.get(art);
+
+                @Nonnull final ItemStack painting = PaintingHelper.write(new ItemStack(Items.PAINTING), art);
+                @Nonnull final ITextComponent name = new TextComponentTranslation(painting.getTranslationKey() + ".name")
+                        .setStyle(new Style().setColor(PaintingHelper.getRarity(info).getColor()));
+                @Nonnull final ITextComponent motive = PaintingHelper.getTitle(info, art.title);
 
                 // main info + mod name
-                if(Tools.show(mode, Config.getRealConfig().getShowModName())) probeInfo.horizontal()
-                        .item(new ItemStack(Items.PAINTING))
+                final boolean modName = Tools.show(mode, Config.getRealConfig().getShowModName());
+                if(modName) probeInfo.horizontal()
+                        .item(painting)
                         .vertical()
-                        .element(new ElementTextComponent(TextStyleClass.INFO, new TextComponentTranslation("jsonpaintings.wailaMotive", motive)))
-                        .element(new ElementTextComponent(TextStyleClass.MODNAME, new TextComponentString(IJSONPainting.from(art).getModNameOrDefault())));
+                        .element(new ElementTextComponent(TextStyleClass.INFO, name))
+                        .element(new ElementTextComponent(TextStyleClass.INFO, new TextComponentTranslation("jsonpaintings.wailaMotive", motive)));
 
                 // main info
                 else probeInfo.horizontal(probeInfo.defaultLayoutStyle().alignment(ElementAlignment.ALIGN_CENTER))
-                        .item(new ItemStack(Items.PAINTING))
+                        .item(painting)
+                        .element(new ElementTextComponent(TextStyleClass.INFO, name))
                         .element(new ElementTextComponent(TextStyleClass.INFO, new TextComponentTranslation("jsonpaintings.wailaMotive", motive)));
+
+                // author
+                if(info.author != null) probeInfo.element(new ElementTextComponent(TextStyleClass.INFO, info.author));
+                if(modName) probeInfo.element(new ElementTextComponent(TextStyleClass.MODNAME, new TextComponentString(PaintingHelper.getModName(info))));
 
                 // sneak to capture
                 if(!player.isCreative() && !player.isSpectator()) {
@@ -70,7 +78,7 @@ public final class TOPHandler
                 }
 
                 // exclusive
-                if(IJSONPainting.from(art).isCreative()) probeInfo.element(new ElementTextComponent(TextStyleClass.INFO, new TextComponentTranslation("jsonpaintings.wailaExclusive")));
+                if(info.isTreasure) probeInfo.element(new ElementTextComponent(TextStyleClass.INFO, new TextComponentTranslation("jsonpaintings.wailaExclusive")));
                 return true;
             }
 

@@ -30,8 +30,8 @@ public final class JsonPaintingInfo implements Runnable
     @Nullable public final String[] remapping;
     @Nullable public final JsonElement rarity;
 
-    @Nullable public final Boolean isTreasure;
-    @Nullable public final Boolean alwaysCapture;
+    @Nullable public Boolean isTreasure;
+    @Nullable public Boolean alwaysCapture;
 
     public JsonPaintingInfo(@Nonnull final String motiveIn, @Nonnull final PaintingInfo infoIn,
                             @Nullable final String[] remappingIn, @Nullable final JsonElement rarityIn,

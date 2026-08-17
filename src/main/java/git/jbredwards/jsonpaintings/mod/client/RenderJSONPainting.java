@@ -36,53 +36,23 @@ public class RenderJSONPainting extends RenderPainting
     public RenderJSONPainting(@Nonnull RenderManager renderManagerIn) { super(renderManagerIn); }
 
     @Override
-    public void doRender(@Nonnull final EntityPainting entity, final double x, final double y, final double z, final float entityYaw, final float partialTicks) {
+    public void renderPainting(@Nonnull final EntityPainting entity, final int widthIn, final int heightIn, final int textureU, final int textureV) {
         @Nonnull final ActivePaintingInfo painting = ActivePaintingInfo.get(entity.art);
-        if(painting.frontTexture == null && painting.backTexture == null && painting.sideTexture == null) {
-            super.doRender(entity, x, y, z, entityYaw, partialTicks);
-            return;
-        }
 
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(x, y, z);
-        GlStateManager.rotate(180 - entityYaw, 0, 1, 0);
-        GlStateManager.enableRescaleNormal();
-
-        bindEntityTexture(entity);
-        GlStateManager.scale(0.0625, 0.0625, 0.0625);
-
-        if(renderOutlines) {
-            GlStateManager.enableColorMaterial();
-            GlStateManager.enableOutlineMode(getTeamColor(entity));
-        }
-
-        renderPainting(entity, painting);
-
-        if(renderOutlines) {
-            GlStateManager.disableOutlineMode();
-            GlStateManager.disableColorMaterial();
-        }
-
-        GlStateManager.disableRescaleNormal();
-        GlStateManager.popMatrix();
-        if(!renderOutlines) renderName(entity, x, y, z);
-    }
-
-    protected void renderPainting(@Nonnull final EntityPainting entity, @Nonnull final ActivePaintingInfo painting) {
         final int front = getGlTextureId(painting.frontTexture != null ? painting.frontTexture : getEntityTexture(entity));
         final int back = getGlTextureId(PaintingHelper.getBackTexture(painting));
         final int side = getGlTextureId(PaintingHelper.getSideTexture(painting));
 
-        final int width = entity.art.sizeX >> 4;
-        final int height = entity.art.sizeY >> 4;
-        final int centerX = -entity.art.sizeX >> 1;
-        final int centerY = -entity.art.sizeY >> 1;
+        final int width = widthIn >> 4;
+        final int height = heightIn >> 4;
+        final int centerX = -widthIn >> 1;
+        final int centerY = -heightIn >> 1;
         final BufferBuilder buffer = Tessellator.getInstance().getBuffer();
 
         final float frontWidth = painting.frontTexture == null ? 16 : width;
         final float frontHeight = painting.frontTexture == null ? 16 : height;
-        final float frontU = painting.frontTexture == null ? painting.getXOffset() / 16f : 0;
-        final float frontV = painting.frontTexture == null ? painting.getYOffset() / 16f : 0;
+        final float frontU = painting.frontTexture == null ? textureU / 16f : 0;
+        final float frontV = painting.frontTexture == null ? textureV / 16f : 0;
 
         for(int x = 0; x < width; x++) {
             for(int y = 0; y < height; y++) {
@@ -129,8 +99,8 @@ public class RenderJSONPainting extends RenderPainting
                 final float sideMaxU = hasSideTexture ? maxU : 0;
                 final float sideMinV = hasSideTexture ? minV : 1;
                 final float sideMaxV = hasSideTexture ? maxV : 0;
-                final float sideWidth = hasSideTexture ? 1f / entity.art.sizeX : 0.0625f;
-                final float sideHeight = hasSideTexture ? 1f / entity.art.sizeY : 0.0625f;
+                final float sideWidth = hasSideTexture ? 1f / widthIn : 0.0625f;
+                final float sideHeight = hasSideTexture ? 1f / heightIn : 0.0625f;
                 boolean drawSide = false;
 
                 //top

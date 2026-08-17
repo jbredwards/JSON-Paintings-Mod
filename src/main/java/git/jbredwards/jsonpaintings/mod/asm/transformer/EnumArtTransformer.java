@@ -9,6 +9,7 @@ import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import org.objectweb.asm.ClassReader;
@@ -113,7 +114,7 @@ public final class EnumArtTransformer implements IClassTransformer, Opcodes
             PAINTINGS.put(painting.title, painting);
             if(painting.ordinal() < 26) { // Set default info for Vanilla's paintings.
                 @Nonnull final ActivePaintingInfo info = ActivePaintingInfo.get(painting);
-                info.author = new TextComponentString("Kristoffer Zetterstrand");
+                if(painting.ordinal() != 19) info.author = new TextComponentString(TextFormatting.GRAY + "Kristoffer Zetterstrand");
                 info.modId = "minecraft";
                 info.modName = "Minecraft";
                 return;
