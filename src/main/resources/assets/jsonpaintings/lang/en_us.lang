@@ -10,6 +10,9 @@ jsonpaintings.command.usage=/jsonpaintings reload
 jsonpaintings.command.usage.trimmed=/paintings reload
 
 # Tree Command
+jsonpaintings.command.list.success=%s Dumped all painting motives to the server log
+jsonpaintings.command.list.usage=/jsonpaintings list
+jsonpaintings.command.list.usage.trimmed=/paintings list
 jsonpaintings.command.tree.usage=/jsonpaintings <subcommand>
 jsonpaintings.command.tree.usage.trimmed=/paintings <subcommand>
 

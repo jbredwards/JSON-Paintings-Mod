@@ -23,6 +23,7 @@ public final class CommandJSONPaintings extends CommandTreeBase
     public final boolean trimmed;
     public CommandJSONPaintings(final boolean trimmedIn) {
         trimmed = trimmedIn;
+        super.addSubcommand(new CommandListPaintings(trimmedIn));
         super.addSubcommand(trimmedIn ? new CommandReloadPaintings.Trimmed() : new CommandReloadPaintings());
         super.addSubcommand(new CommandTreeHelp(this));
     }
