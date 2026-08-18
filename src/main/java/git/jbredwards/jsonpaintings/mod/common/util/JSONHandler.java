@@ -322,8 +322,8 @@ public final class JSONHandler
             }
             // Forge mod.
             else {
-                modInfo = packZip.getEntry("META-INF/mods.toml");
-                if(modInfo == null) modInfo = packZip.getEntry("META-INF/neoforge.mods.toml");
+                modInfo = packZip.getEntry("META-INF/neoforge.mods.toml");
+                if(modInfo == null) modInfo = packZip.getEntry("META-INF/mods.toml");
                 if(modInfo != null) try(@Nonnull final InputStream is = packZip.getInputStream(modInfo)) {
                     for(@Nonnull final String line : IOUtils.readLines(is, StandardCharsets.UTF_8)) {
                         final int begin = line.indexOf('=');
@@ -335,8 +335,8 @@ public final class JSONHandler
                     }
                 }
             }
+            // Unknown mod type (probably a datapack). Use file name.
+            return FilenameUtils.removeExtension(pack.getName());
         }
-        // Use file name.
-        return FilenameUtils.removeExtension(pack.getName());
     }
 }

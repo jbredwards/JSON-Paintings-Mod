@@ -85,7 +85,7 @@ public final class JSONPaintings
 
     @Mod.EventHandler
     public void serverStarting(@Nonnull final FMLServerStartingEvent event) {
-        event.registerServerCommand(new CommandJSONPaintings());
-        event.registerServerCommand(new CommandJSONPaintings.Trimmed());
+        event.registerServerCommand(new CommandJSONPaintings(false));
+        event.registerServerCommand(new CommandJSONPaintings(true));
     }
 }
