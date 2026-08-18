@@ -216,13 +216,12 @@ public final class JSONHandler
             if(packs != null) for(@Nonnull final File pack : packs) {
                 @Nonnull final String modName = gatherPackName(pack);
                 for(@Nonnull final String domain : gatherPackDomains(pack)) {
-                    @Nonnull final String modId = domain.substring(0, domain.length() - 1);
                     // Using dummy mod containers, so I can re-use the `readMods()` logic.
                     dummyContainers.add(new DummyModContainer() {
                         @Nonnull
                         @Override
                         public String getModId() {
-                            return modId;
+                            return domain;
                         }
 
                         @Nonnull
@@ -287,8 +286,8 @@ public final class JSONHandler
     }
 
     @Nonnull
-    private static List<String> gatherPackDomains(@Nonnull final File pack) throws IOException {
-        @Nonnull final List<String> domains = new ArrayList<>();
+    private static Collection<String> gatherPackDomains(@Nonnull final File pack) throws IOException {
+        @Nonnull final Set<String> domains = new HashSet<>();
         if(pack.isDirectory()) {
             @Nullable final File[] domainFiles = new File(pack, "data").listFiles();
             if(domainFiles != null) for(@Nonnull final File domain : domainFiles) if(domain.isDirectory()) domains.add(domain.getName());
@@ -296,9 +295,10 @@ public final class JSONHandler
         else try(@Nonnull final ZipFile packZip = new ZipFile(pack)) {
             for(@Nonnull final Enumeration<? extends ZipEntry> it = packZip.entries(); it.hasMoreElements();) {
                 @Nonnull final ZipEntry entry = it.nextElement();
-                if(entry.isDirectory() && entry.getName().length() > 5 && entry.getName().startsWith("data/")) {
+                if(entry.getName().length() > 5 && entry.getName().startsWith("data/")) {
                     @Nonnull final String domain = entry.getName().substring(5);
-                    if(domain.indexOf('/') == domain.length() - 1) domains.add(domain);
+                    final int idx = domain.indexOf('/');
+                    if(idx != -1) domains.add(domain.substring(0, idx));
                 }
             }
         }
