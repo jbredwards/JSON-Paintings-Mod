@@ -29,6 +29,7 @@ import org.apache.commons.io.IOUtils;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.*;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
@@ -121,7 +122,17 @@ public final class JSONHandler
     @Nonnull
     private static final Gson GSON = new GsonBuilder()
             .registerTypeHierarchyAdapter(ITextComponent.class, new ITextComponent.Serializer())
-            .registerTypeHierarchyAdapter(Style.class, new Style.Serializer())
+            .registerTypeHierarchyAdapter(Style.class, new Style.Serializer() {
+                @Nullable
+                @Override
+                public Style deserialize(@Nonnull final JsonElement json, @Nonnull final Type type, @Nonnull final JsonDeserializationContext ctx) throws JsonParseException {
+                    try { return super.deserialize(json, type, ctx); }
+                    catch(@Nonnull final Exception e) {
+                        JSONPaintings.LOGGER.error(e);
+                        return null;
+                    }
+                }
+            })
             .registerTypeAdapterFactory(new EnumTypeAdapterFactory())
             .registerTypeAdapter(JsonPaintingInfo.class, DESERIALIZER)
             .create();
