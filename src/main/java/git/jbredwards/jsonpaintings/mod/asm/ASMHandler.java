@@ -33,6 +33,7 @@ public final class ASMHandler implements IFMLLoadingPlugin
         @Nonnull
         public static final List<IClassTransformer> TRANSFORMERS = Lists.newArrayList(
                 new EntityPaintingTransformer(),
+                new EnumHelperTransformer(),
                 new EnumArtTransformer(),
                 new ItemTransformer(),
                 //mod compat
