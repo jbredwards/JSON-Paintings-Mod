@@ -5,13 +5,18 @@
 
 package git.jbredwards.jsonpaintings.mod.asm.transformer;
 
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
+import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.launchwrapper.IClassTransformer;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -43,6 +48,8 @@ public final class EnumHelperTransformer implements IClassTransformer, Opcodes
                     list.add(new MethodInsnNode(INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", true));
                     list.add(new TypeInsnNode(CHECKCAST, "net/minecraft/entity/item/EntityPainting$EnumArt"));
                     list.add(new VarInsnNode(ASTORE, existing.index));
+                    list.add(new VarInsnNode(ALOAD, existing.index));
+                    list.add(new MethodInsnNode(INVOKESTATIC, "git/jbredwards/jsonpaintings/mod/asm/transformer/EnumHelperTransformer$Hooks", "applyNewMod", "(Lnet/minecraft/entity/item/EntityPainting$EnumArt;)V", false));
 
                     @Nonnull final LabelNode label = new LabelNode();
                     list.add(new VarInsnNode(ALOAD, existing.index));
@@ -64,5 +71,19 @@ public final class EnumHelperTransformer implements IClassTransformer, Opcodes
         }
 
         return basicClass;
+    }
+
+    @SuppressWarnings("unused")
+    public static final class Hooks
+    {
+        public static void applyNewMod(@Nullable final EntityPainting.EnumArt art) {
+            if(art != null) {
+                @Nullable final ModContainer container = Loader.instance().activeModContainer();
+                if(container != null) {
+                    ActivePaintingInfo.get(art).modId = container.getModId();
+                    ActivePaintingInfo.get(art).modName = container.getName();
+                }
+            }
+        }
     }
 }
