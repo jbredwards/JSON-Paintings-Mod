@@ -7,6 +7,7 @@ package git.jbredwards.jsonpaintings.mod.common.util;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
 import git.jbredwards.jsonpaintings.api.BasicPaintingInfo;
 import git.jbredwards.jsonpaintings.api.PaintingInfo;
 import git.jbredwards.jsonpaintings.mod.JSONPaintings;
@@ -45,6 +46,7 @@ public final class JSONHandler
 {
     @Nonnull public static final ResourceLocation DEFAULT_BACK_TEXTURE = new ResourceLocation(JSONPaintings.MODID, "textures/paintings/back.png");
     @Nonnull public static final Map<String, EntityPainting.EnumArt> PAINTING_REMAPS = new HashMap<>();
+    @Nonnull public static EntityPainting.EnumArt[] NON_TREASURE_PAINTINGS = new EntityPainting.EnumArt[0];
 
     @Nullable private static String activeMotive;
     @Nullable private static ModContainer activeMod;
@@ -160,6 +162,11 @@ public final class JSONHandler
         FROM_USER_JSON.forEach(JsonPaintingInfo::postInit);
     }
 
+    public static void loadComplete() {
+        // Cache survival-only paintings.
+        NON_TREASURE_PAINTINGS = Arrays.stream(EntityPainting.EnumArt.values()).filter(art -> !ActivePaintingInfo.get(art).isTreasure).toArray(EntityPainting.EnumArt[]::new);
+    }
+
     // Reads each mod.
     public static void readMods() { readMods(Loader.instance().getModList(), FROM_MOD_JSON, "mod"); }
     public static void readMods(@Nonnull final List<ModContainer> containers, @Nonnull final List<JsonPaintingInfo> infos, @Nonnull final String type) {
@@ -270,7 +277,10 @@ public final class JSONHandler
             }
         }
 
-        if(isReload) FROM_USER_JSON.forEach(Runnable::run);
+        if(isReload) {
+            FROM_USER_JSON.forEach(Runnable::run);
+            loadComplete();
+        }
     }
 
     @Nonnull

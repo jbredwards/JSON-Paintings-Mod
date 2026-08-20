@@ -5,7 +5,7 @@
 
 package git.jbredwards.jsonpaintings.mod.asm.transformer;
 
-import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
+import git.jbredwards.jsonpaintings.mod.common.util.JSONHandler;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.launchwrapper.IClassTransformer;
@@ -15,7 +15,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import javax.annotation.Nonnull;
-import java.util.Arrays;
 
 /**
  *
@@ -75,10 +74,7 @@ public final class PSGRevampedServerTransformer implements IClassTransformer, Op
     {
         @Nonnull
         public static EntityPainting.EnumArt[] values(@Nonnull EntityPlayer player) {
-            return player.isCreative() ? EntityPainting.EnumArt.values()
-                    : Arrays.stream(EntityPainting.EnumArt.values())
-                            .filter(art -> !IJSONPainting.from(art).isCreative())
-                            .toArray(EntityPainting.EnumArt[]::new);
+            return player.isCreative() ? EntityPainting.EnumArt.values() : JSONHandler.NON_TREASURE_PAINTINGS;
         }
     }
 }

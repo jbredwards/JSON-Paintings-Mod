@@ -5,7 +5,7 @@
 
 package git.jbredwards.jsonpaintings.mod.asm.transformer;
 
-import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
+import git.jbredwards.jsonpaintings.mod.common.util.JSONHandler;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.launchwrapper.IClassTransformer;
 import org.objectweb.asm.ClassReader;
@@ -14,7 +14,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import javax.annotation.Nonnull;
-import java.util.Arrays;
 
 /**
  * Don't allow creative paintings to appear in twilight forest dungeons
@@ -73,7 +72,7 @@ public final class TwilightForestTransformer implements IClassTransformer, Opcod
     {
         @Nonnull
         public static EntityPainting.EnumArt[] values() {
-            return Arrays.stream(EntityPainting.EnumArt.values()).filter(art -> !IJSONPainting.from(art).isCreative()).toArray(EntityPainting.EnumArt[]::new);
+            return JSONHandler.NON_TREASURE_PAINTINGS;
         }
     }
 }

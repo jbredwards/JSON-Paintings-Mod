@@ -84,6 +84,11 @@ public final class JSONPaintings
     }
 
     @Mod.EventHandler
+    public void loadComplete(@Nonnull final FMLLoadCompleteEvent event) {
+        JSONHandler.loadComplete();
+    }
+
+    @Mod.EventHandler
     public void serverStarting(@Nonnull final FMLServerStartingEvent event) {
         event.registerServerCommand(new CommandJSONPaintings(false));
         event.registerServerCommand(new CommandJSONPaintings(true));

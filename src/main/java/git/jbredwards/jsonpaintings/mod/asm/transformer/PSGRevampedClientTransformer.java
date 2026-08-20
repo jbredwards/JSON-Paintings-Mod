@@ -5,7 +5,7 @@
 
 package git.jbredwards.jsonpaintings.mod.asm.transformer;
 
-import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraft.util.ResourceLocation;
@@ -99,16 +99,16 @@ public final class PSGRevampedClientTransformer implements IClassTransformer, Op
     {
         @Nonnull
         public static ResourceLocation getTexture(@Nonnull EntityPainting.EnumArt art, @Nonnull ResourceLocation defaultTexture) {
-            final IJSONPainting painting = IJSONPainting.from(art);
-            return painting.useSpecialRenderer() ? painting.getFrontTexture() : defaultTexture;
+            final ResourceLocation frontTexture = ActivePaintingInfo.get(art).frontTexture;
+            return frontTexture != null ? frontTexture : defaultTexture;
         }
 
         public static int getWidth(@Nonnull EntityPainting.EnumArt art, int defaultWidth) {
-            return IJSONPainting.from(art).useSpecialRenderer() ? art.sizeX : defaultWidth;
+            return ActivePaintingInfo.get(art).frontTexture != null ? art.sizeX : defaultWidth;
         }
 
         public static int getHeight(@Nonnull EntityPainting.EnumArt art, int defaultHeight) {
-            return IJSONPainting.from(art).useSpecialRenderer() ? art.sizeY : defaultHeight;
+            return ActivePaintingInfo.get(art).frontTexture != null ? art.sizeY : defaultHeight;
         }
     }
 }

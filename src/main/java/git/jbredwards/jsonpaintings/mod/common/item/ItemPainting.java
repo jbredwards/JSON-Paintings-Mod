@@ -10,7 +10,7 @@ import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
 import git.jbredwards.jsonpaintings.api.PaintingHelper;
 import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import git.jbredwards.jsonpaintings.mod.common.capability.IArtCapability;
-import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
+import git.jbredwards.jsonpaintings.mod.common.util.JSONHandler;
 import io.netty.util.internal.IntegerHolder;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
@@ -54,9 +54,7 @@ public class ItemPainting extends ItemHangingEntity
         final List<Pair<EntityPainting.EnumArt, Integer>> validArt = new ArrayList<>(EntityPainting.EnumArt.values().length);
         final IntegerHolder maxSize = new IntegerHolder();
 
-        for(EntityPainting.EnumArt art : EntityPainting.EnumArt.values()) {
-            if(!player.isCreative() && IJSONPainting.from(art).isCreative()) continue;
-
+        for(EntityPainting.EnumArt art : player.isCreative() ? EntityPainting.EnumArt.values() : JSONHandler.NON_TREASURE_PAINTINGS) {
             painting.art = art;
             painting.updateFacingWithBoundingBox(facing);
 

@@ -60,7 +60,6 @@ public class BasicPaintingInfo extends PaintingInfo
     }
 
     /**
-     * Unused if {@link PaintingInfo#useSpecialRenderer} is true.
      * @return X offset on the Vanilla painting atlas texture.
      * @author jbred
      */
@@ -81,7 +80,6 @@ public class BasicPaintingInfo extends PaintingInfo
     }
 
     /**
-     * Unused if {@link PaintingInfo#useSpecialRenderer} is true.
      * @return Y offset on the Vanilla painting atlas texture.
      * @author jbred
      */

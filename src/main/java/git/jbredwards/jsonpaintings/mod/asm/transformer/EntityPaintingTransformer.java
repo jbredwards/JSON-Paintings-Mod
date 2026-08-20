@@ -5,10 +5,10 @@
 
 package git.jbredwards.jsonpaintings.mod.asm.transformer;
 
+import git.jbredwards.jsonpaintings.api.ActivePaintingInfo;
 import git.jbredwards.jsonpaintings.api.event.PaintingUpdateEvent;
 import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import git.jbredwards.jsonpaintings.mod.common.capability.IArtCapability;
-import git.jbredwards.jsonpaintings.mod.common.util.IJSONPainting;
 import git.jbredwards.jsonpaintings.mod.common.util.JSONHandler;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.Entity;
@@ -26,7 +26,6 @@ import org.objectweb.asm.tree.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Arrays;
 
 /**
  *
@@ -153,7 +152,7 @@ public final class EntityPaintingTransformer implements IClassTransformer, Opcod
     {
         @Nonnull
         public static ItemStack applyArt(@Nonnull final ItemStack stack, @Nonnull final EntityPainting painting, @Nullable final Entity breaker) {
-            if(breaker instanceof EntityPlayer && breaker.isSneaking() || IJSONPainting.from(painting.art).alwaysCapture()) {
+            if(breaker instanceof EntityPlayer && breaker.isSneaking() || ActivePaintingInfo.get(painting.art).alwaysCapture) {
                 final @Nullable IArtCapability cap = IArtCapability.get(stack);
                 if(cap != null) cap.setArt(painting.art);
             }
@@ -163,17 +162,13 @@ public final class EntityPaintingTransformer implements IClassTransformer, Opcod
 
         @Nonnull
         public static EntityPainting.EnumArt[] values() {
-            final EntityPainting.EnumArt[] values = Arrays.stream(EntityPainting.EnumArt.values())
-                    .filter(art -> !IJSONPainting.from(art).isCreative())
-                    .toArray(EntityPainting.EnumArt[]::new);
-
             //this would be wack
-            if(values.length == 0) throw new IllegalStateException(
+            if(JSONHandler.NON_TREASURE_PAINTINGS.length == 0) throw new IllegalStateException(
                     "Attempted to place painting entity with no valid art values! " +
                     "Please ensure there is at least one 1x1 art type with \"isCreative\" set to false."
             );
 
-            return values;
+            return JSONHandler.NON_TREASURE_PAINTINGS;
         }
 
         @Nonnull
