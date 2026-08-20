@@ -8,7 +8,7 @@ package git.jbredwards.jsonpaintings.api;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * A basic {@code PaintingInfo} implementation.
+ * A basic {@code PaintingInfo} implementation. This is not tied to any actual {@code EnumArt} instance.
  *
  * @author jbred
  *
@@ -23,7 +23,7 @@ public class BasicPaintingInfo extends PaintingInfo
      * @return Width of the painting (in pixels).
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     @Override
     public int getWidth() {
         return this.width;
@@ -33,7 +33,7 @@ public class BasicPaintingInfo extends PaintingInfo
      * Setter for {@link BasicPaintingInfo#getWidth()}.
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     @Override
     public void setWidth(final int width) {
         this.width = width;
@@ -43,7 +43,7 @@ public class BasicPaintingInfo extends PaintingInfo
      * @return Height of the painting (in pixels).
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     @Override
     public int getHeight() {
         return this.height;
@@ -53,7 +53,7 @@ public class BasicPaintingInfo extends PaintingInfo
      * Setter for {@link BasicPaintingInfo#getHeight()}.
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     @Override
     public void setHeight(final int height) {
         this.height = height;

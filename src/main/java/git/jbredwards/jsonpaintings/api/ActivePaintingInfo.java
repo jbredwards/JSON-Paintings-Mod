@@ -15,7 +15,8 @@ import java.util.Objects;
 
 /**
  * A {@code PaintingInfo} that's tied to an {@code EnumArt} instance.
- * <br> May also be defined using a paintings.json file in your mod's resources.
+ * <br> Should be defined using a paintings.json file in your mod's resources.
+ * <a href="https://github.com/jbredwards/JSON-Paintings-Mod/blob/1.12.2/README.md#getting-started-with-paintingsjson">Wiki</a>
  *
  * @author jbred
  *
@@ -52,7 +53,7 @@ public final class ActivePaintingInfo extends PaintingInfo
      * @return Width of the painting (in pixels).
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     @Override
     public int getWidth() {
         return this.painting.sizeX;
@@ -62,7 +63,7 @@ public final class ActivePaintingInfo extends PaintingInfo
      * Setter for {@link ActivePaintingInfo#getWidth()}.
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     @Override
     public void setWidth(final int width) {
         this.painting.sizeX = width;
@@ -72,7 +73,7 @@ public final class ActivePaintingInfo extends PaintingInfo
      * @return Height of the painting (in pixels).
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     @Override
     public int getHeight() {
         return this.painting.sizeY;
@@ -82,7 +83,7 @@ public final class ActivePaintingInfo extends PaintingInfo
      * Setter for {@link ActivePaintingInfo#getHeight()}.
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     @Override
     public void setHeight(final int height) {
         this.painting.sizeY = height;

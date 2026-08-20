@@ -31,16 +31,17 @@ public abstract class PaintingInfo
 {
     /**
      * The texture rendered on the front face of the painting.
-     * <br>Must be non-null if this uses special rendering.
+     * <br>Uses Vanilla's painting texture atlas if null.
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
+    @Nullable
     public ResourceLocation frontTexture;
 
     /**
      * The texture rendered on the back face of the painting.
      * <br>Uses Vanilla's generic painting back texture if null.
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     @Nullable
     public ResourceLocation backTexture;
 
@@ -48,7 +49,7 @@ public abstract class PaintingInfo
      * The texture rendered on the side faces of the painting.
      * <br>Uses {@link ActivePaintingInfo#backTexture} if null.
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     @Nullable
     public ResourceLocation sideTexture;
 
@@ -74,7 +75,7 @@ public abstract class PaintingInfo
      * <br> Automatically set to the active mod for {@code ActivePaintingInfo} when an {@code EnumArt} is created.
      * <br> Uses "Minecraft Forge" if null.
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.3.0")
     @Nullable
     public String modName;
 
@@ -97,48 +98,48 @@ public abstract class PaintingInfo
      * The rarity of the painting (cosmetic only).
      * <br> Uses {@link net.minecraft.item.EnumRarity#COMMON} if null.
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.3.0")
     @Nullable
     public IRarity rarity;
 
     /**
      * True if this should always be captured when broken.
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.3.0")
     public boolean alwaysCapture;
 
     /**
      * True if this should not be obtainable via painting cycling.
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.1.0")
     public boolean isTreasure;
 
     /**
      * @return Width of the painting (in pixels).
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     public abstract int getWidth();
 
     /**
      * Setter for {@link PaintingInfo#getWidth()}.
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     public abstract void setWidth(final int width);
 
     /**
      * @return Height of the painting (in pixels).
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     public abstract int getHeight();
 
     /**
      * Setter for {@link PaintingInfo#getHeight()}.
      * @author jbred
      */
-    @ApiStatus.AvailableSince("1.5.0")
+    @ApiStatus.AvailableSince("1.0.0")
     public abstract void setHeight(final int height);
 
     /**

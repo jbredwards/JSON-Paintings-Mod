@@ -37,9 +37,10 @@ public class PaintingUpdateEvent extends EntityEvent
      * The painting entity being ticked.
      */
     @ApiStatus.AvailableSince("1.3.0")
-    @Nonnull public final EntityPainting painting;
+    @Nonnull
+    public final EntityPainting painting;
 
-    @ApiStatus.AvailableSince("1.3.0")
+    @ApiStatus.Internal
     public PaintingUpdateEvent(@Nonnull final EntityPainting paintingIn) {
         super(paintingIn);
         this.painting = paintingIn;
@@ -76,22 +77,24 @@ public class PaintingUpdateEvent extends EntityEvent
     }
 
     /**
-     * Note: This compares the mantle, not the {@link PaintingInfo#title title}.
-     * @param mantle The mantle to compare against.
-     * @return True if this painting's art mantle is equal to the one provided.
+     * Note: This compares the motives, not the {@link PaintingInfo#title title}.
+     * @param motive The motive to compare against.
+     * @return True if this painting's art motives is equal to the one provided.
+     * @throws NullPointerException If motive is null.
+     * @author jbred
      */
     @ApiStatus.AvailableSince("1.5.0")
-    public boolean matches(@Nonnull final String mantle) {
-        return mantle.equals(this.getArt().title);
+    public boolean matches(@Nonnull final String motive) {
+        return motive.equals(this.getArt().title);
     }
 
     /**
-     * Use {@link PaintingUpdateEvent#matches(String)} instead.
-     * <br> This method uses an incorrect calculation, painting mantles are case-sensitive.
+     * Use {@link PaintingUpdateEvent#matches} instead.
+     * This method uses an incorrect calculation, motives are case-sensitive.
      */
     @ApiStatus.AvailableSince("1.3.0")
     @Deprecated
-    public boolean matchesArt(@Nonnull final String mantle) {
-        return mantle.equalsIgnoreCase(this.getArt().title);
+    public boolean matchesArt(@Nonnull final String motive) {
+        return motive.equalsIgnoreCase(this.getArt().title);
     }
 }
