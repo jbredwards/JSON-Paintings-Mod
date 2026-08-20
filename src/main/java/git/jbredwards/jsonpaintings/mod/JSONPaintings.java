@@ -35,7 +35,8 @@ import javax.annotation.Nonnull;
  *
  */
 @Mod(modid = JSONPaintings.MODID, name = JSONPaintings.NAME, version = JSONPaintings.VERSION,
-dependencies = "after:jei@[4.15.0.276,);") // due to https://github.com/mezz/JustEnoughItems/issues/1549
+dependencies = "after:jei@[4.15.0.276,);", // due to https://github.com/mezz/JustEnoughItems/issues/1549
+updateJSON = "https://api.modrinth.com/updates/json-paintings/forge_updates.json")
 public final class JSONPaintings
 {
     @Nonnull public static final String MODID = Tags.MOD_ID, NAME = Tags.NAME, VERSION = Tags.VERSION;
@@ -44,7 +45,10 @@ public final class JSONPaintings
 
     @Mod.EventHandler
     public void construct(@Nonnull final FMLConstructionEvent event) {
+        final long ms = System.currentTimeMillis();
+        LOGGER.info("Reading paintings...");
         JSONHandler.construct();
+        LOGGER.info("Finished reading paintings! (took %d ms)", System.currentTimeMillis() - ms);
     }
 
     @Mod.EventHandler
