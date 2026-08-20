@@ -15,9 +15,6 @@ import net.minecraft.client.renderer.entity.RenderPainting;
 import net.minecraft.client.resources.*;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.resource.IResourceType;
-import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
-import net.minecraftforge.client.resource.VanillaResourceType;
 import net.minecraftforge.fml.common.FMLContainerHolder;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.relauncher.Side;
@@ -31,7 +28,6 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Predicate;
 
 /**
  * Allows modpack developers to add their own painting textures
@@ -39,7 +35,7 @@ import java.util.function.Predicate;
  *
  */
 @SideOnly(Side.CLIENT)
-public class PaintingsResourcePack extends FolderResourcePack implements ISelectiveResourceReloadListener, FMLContainerHolder, Closeable
+public class PaintingsResourcePack extends FolderResourcePack implements FMLContainerHolder, Closeable
 {
     @Nonnull protected final List<IResourcePack> paintingPacks;
     @Nonnull protected final ModContainer container;
@@ -48,20 +44,6 @@ public class PaintingsResourcePack extends FolderResourcePack implements ISelect
         super(ASMHandler.paintingsLocation.toFile());
         paintingPacks = new ArrayList<>();
         container = containerIn;
-        ((IReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).registerReloadListener(this);
-    }
-
-    @Override
-    public void onResourceManagerReload(@Nonnull final IResourceManager resourceManager, @Nonnull final Predicate<IResourceType> resourcePredicate) {
-        if(resourcePredicate.test(VanillaResourceType.LANGUAGES) || resourcePredicate.test(VanillaResourceType.TEXTURES)) {
-            close();
-            @Nullable final File[] packs = ASMHandler.paintingsLocation.resolve("packs").toFile().listFiles();
-            if(packs != null) for(@Nonnull final File pack : packs) {
-                @Nonnull final IResourcePack resourcePack = pack.isDirectory() ? new FolderResourcePack(pack) : new FileResourcePack(pack);
-                if(!resourcePack.getResourceDomains().isEmpty()) paintingPacks.add(resourcePack);
-                else if(resourcePack instanceof Closeable) IOUtils.closeQuietly((Closeable)resourcePack);
-            }
-        }
     }
 
     @Nonnull
@@ -73,6 +55,15 @@ public class PaintingsResourcePack extends FolderResourcePack implements ISelect
     @Nonnull
     @Override
     public Set<String> getResourceDomains() {
+        close();
+
+        @Nullable final File[] packs = ASMHandler.paintingsLocation.resolve("packs").toFile().listFiles();
+        if(packs != null) for(@Nonnull final File pack : packs) {
+            @Nonnull final IResourcePack resourcePack = pack.isDirectory() ? new FolderResourcePack(pack) : new FileResourcePack(pack);
+            if(!resourcePack.getResourceDomains().isEmpty()) paintingPacks.add(resourcePack);
+            else if(resourcePack instanceof Closeable) IOUtils.closeQuietly((Closeable)resourcePack);
+        }
+        
         @Nonnull final Set<String> domains = new HashSet<>();
         domains.add(JSONPaintings.MODID);
 
