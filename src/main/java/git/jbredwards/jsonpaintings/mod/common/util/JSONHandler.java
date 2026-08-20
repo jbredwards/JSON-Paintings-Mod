@@ -145,6 +145,7 @@ public final class JSONHandler
     }
 
     public static void construct() {
+        createFolders();
         // Effectively remove the character limit for motives.
         EntityPainting.EnumArt.MAX_NAME_LENGTH = Short.MAX_VALUE;
         // Read painting infos.
@@ -359,5 +360,26 @@ public final class JSONHandler
             // Unknown mod type (probably a datapack). Use file name.
             return FilenameUtils.removeExtension(pack.getName());
         }
+    }
+
+    private static void createFolders() {
+        if(ASMHandler.paintingsLocation.toFile().mkdirs()) try {
+            Files.createDirectory(ASMHandler.paintingsLocation.resolve("packs"));
+            Files.createDirectory(ASMHandler.paintingsLocation.resolve("textures"));
+            Files.write(ASMHandler.paintingsLocation.resolve("README.txt"), Collections.singleton(
+                    "Thank you for downloading JSON Paintings!\n" +
+                    "\n" +
+                    "The \"paintings\" folder is where you can define custom paintings, or add painting packs!\n" +
+                    "See https://github.com/jbredwards/JSON-Paintings-Mod/blob/1.12.2/README.md for more info.\n" +
+                    "\n" +
+                    "If you add paintings while the game is loaded, run the \"/jsonpaintings reload\" command.\n" +
+                    "If you add painting packs while the game is loaded, run the \"/jsonpaintings reload\"\n" +
+                    "command then press F3 + T to reload their internal resource packs.\n" +
+                    "\n" +
+                    "Once you're done with this README.txt file, it can be deleted."
+            ), StandardCharsets.UTF_8);
+        }
+
+        catch(@Nonnull final IOException e) { JSONPaintings.LOGGER.error("Could not generate directories.", e); }
     }
 }
