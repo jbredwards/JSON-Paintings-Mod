@@ -26,6 +26,7 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -42,6 +43,7 @@ import java.util.zip.ZipFile;
  * @author jbred
  *
  */
+@ApiStatus.Internal
 public final class JSONHandler
 {
     @Nonnull public static final ResourceLocation DEFAULT_BACK_TEXTURE = new ResourceLocation(JSONPaintings.MODID, "textures/paintings/back.png");
@@ -69,10 +71,10 @@ public final class JSONHandler
             @Nonnull final String side = JsonUtils.getString(textures, "side", back);
 
             // Allow for texture locations to reference other textures. (example -> "back": "#front")
-            @Nonnull final ImmutableMap<String, String> textureMap = ImmutableMap.of("front", front, "back", back, "side", side);
-            info.frontTexture = buildLocation(front.charAt(0) == '#' ? textureMap.get(front.substring(1)) : front);
-            info.backTexture = buildLocation(back.charAt(0) == '#' ? textureMap.get(back.substring(1)) : back);
-            info.sideTexture = buildLocation(side.charAt(0) == '#' ? textureMap.get(side.substring(1)) : side);
+            @Nonnull final ImmutableMap<String, String> textureMap = ImmutableMap.of("#front", front, "#back", back, "#side", side);
+            info.frontTexture = buildLocation(front.charAt(0) == '#' ? textureMap.get(front) : front);
+            info.backTexture = buildLocation(back.charAt(0) == '#' ? textureMap.get(back) : back);
+            info.sideTexture = buildLocation(side.charAt(0) == '#' ? textureMap.get(side) : side);
         }
 
         // Front texture definition for modern paintings.
@@ -297,7 +299,8 @@ public final class JSONHandler
 
     @Nonnull
     static String frontTexturePath(@Nonnull final PaintingInfo info, @Nonnull final String motive) {
-        return info.modId + ':' + (!JSONPaintings.MODID.equals(info.modId) ? "paintings/" + motive.toLowerCase() : motive.toLowerCase());
+        @Nonnull final ResourceLocation loc = new ResourceLocation(motive);
+        return info.modId + ':' + (!JSONPaintings.MODID.equals(info.modId) ? "paintings/" + loc.getPath() : loc.getPath());
     }
 
     @Nonnull
@@ -366,6 +369,8 @@ public final class JSONHandler
         if(ASMHandler.paintingsLocation.toFile().mkdirs()) try {
             Files.createDirectory(ASMHandler.paintingsLocation.resolve("packs"));
             Files.createDirectory(ASMHandler.paintingsLocation.resolve("textures"));
+            Files.write(ASMHandler.paintingsLocation.resolve("paintings.json"), Collections.singleton("[\n\n]"),
+                    StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
             Files.write(ASMHandler.paintingsLocation.resolve("README.txt"), Collections.singleton(
                     "Thank you for downloading JSON Paintings!\n" +
                     "\n" +
@@ -374,10 +379,10 @@ public final class JSONHandler
                     "\n" +
                     "If you add paintings while the game is loaded, run the \"/jsonpaintings reload\" command.\n" +
                     "If you add painting packs while the game is loaded, run the \"/jsonpaintings reload\"\n" +
-                    "command then press F3 + T to reload their internal resource packs.\n" +
+                    "command then press F3 + T to load their internal resource packs.\n" +
                     "\n" +
                     "Once you're done with this README.txt file, it can be deleted."
-            ), StandardCharsets.UTF_8);
+            ));
         }
 
         catch(@Nonnull final IOException e) { JSONPaintings.LOGGER.error("Could not generate directories.", e); }
