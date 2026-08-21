@@ -89,9 +89,10 @@ public final class JSONHandler
         if(json.has("author")) info.author = ctx.deserialize(json.get("author"), ITextComponent.class);
         if(json.has("title")) info.title = ctx.deserialize(json.get("title"), ITextComponent.class);
         if(json.has("item_model")) {
-            @Nonnull String itemModel = JsonUtils.getString(json.get("item_model"), "item_model");
-            if(itemModel.indexOf(':') == -1) itemModel = info.modId + ':' + itemModel;
-            info.itemModel = itemModel.indexOf('#') == -1 ? new ModelResourceLocation(itemModel, "inventory") : new ModelResourceLocation(itemModel);
+            @Nonnull final String itemModel = JsonUtils.getString(json.get("item_model"), "item_model");
+            @Nonnull final ResourceLocation loc = itemModel.indexOf(':') == -1 ? new ResourceLocation(info.modId, itemModel) : new ResourceLocation(itemModel);
+            // Allow blockstates to be provided as the "models/item" format, if they don't have a defined blockstate variant.
+            info.itemModel = itemModel.indexOf('#') != -1 ? new ModelResourceLocation(loc.toString()) : new ResourceLocation(loc.getNamespace(), "item/" + loc.getPath());
         }
 
         // Exclusive paintings.

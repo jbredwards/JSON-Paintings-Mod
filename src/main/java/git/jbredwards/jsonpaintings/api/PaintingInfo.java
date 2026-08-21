@@ -59,7 +59,7 @@ public abstract class PaintingInfo
      */
     @ApiStatus.AvailableSince("1.5.0")
     @Nullable
-    public ModelResourceLocation itemModel;
+    public ResourceLocation itemModel;
 
     /**
      * The id of the mod that adds this, used by item tooltips.
@@ -209,7 +209,6 @@ public abstract class PaintingInfo
         this.frontTexture = from.readBoolean() ? new ResourceLocation(ByteBufUtils.readUTF8String(from)) : null;
         this.backTexture = from.readBoolean() ? new ResourceLocation(ByteBufUtils.readUTF8String(from)) : null;
         this.sideTexture = from.readBoolean() ? new ResourceLocation(ByteBufUtils.readUTF8String(from)) : null;
-        this.itemModel = from.readBoolean() ? new ModelResourceLocation(ByteBufUtils.readUTF8String(from)) : null;
         this.modId = from.readBoolean() ? ByteBufUtils.readUTF8String(from) : null;
         this.modName = from.readBoolean() ? ByteBufUtils.readUTF8String(from) : null;
         this.rarity = from.readBoolean() ? RarityUtils.decode(from) : null;
@@ -218,6 +217,9 @@ public abstract class PaintingInfo
 
         this.author = from.readBoolean() ? ITextComponent.Serializer.jsonToComponent(ByteBufUtils.readUTF8String(from)) : null;
         this.title = from.readBoolean() ? ITextComponent.Serializer.jsonToComponent(ByteBufUtils.readUTF8String(from)) : null;
+        this.itemModel = from.readBoolean() ? from.readBoolean()
+                ? new ModelResourceLocation(ByteBufUtils.readUTF8String(from))
+                : new ResourceLocation(ByteBufUtils.readUTF8String(from)) : null;
     }
 
     /**
@@ -234,7 +236,6 @@ public abstract class PaintingInfo
         to.writeBoolean(this.frontTexture != null); if(this.frontTexture != null) ByteBufUtils.writeUTF8String(to, this.frontTexture.toString());
         to.writeBoolean(this.backTexture != null); if(this.backTexture != null) ByteBufUtils.writeUTF8String(to, this.backTexture.toString());
         to.writeBoolean(this.sideTexture != null); if(this.sideTexture != null) ByteBufUtils.writeUTF8String(to, this.sideTexture.toString());
-        to.writeBoolean(this.itemModel != null); if(this.itemModel != null) ByteBufUtils.writeUTF8String(to, this.itemModel.toString());
         to.writeBoolean(this.modId != null); if(this.modId != null) ByteBufUtils.writeUTF8String(to, this.modId);
         to.writeBoolean(this.modName != null); if(this.modName != null) ByteBufUtils.writeUTF8String(to, this.modName);
         to.writeBoolean(this.rarity != null); if(this.rarity != null) RarityUtils.encode(to, this.rarity);
@@ -243,5 +244,9 @@ public abstract class PaintingInfo
 
         to.writeBoolean(this.author != null); if(this.author != null) ByteBufUtils.writeUTF8String(to, ITextComponent.Serializer.componentToJson(this.author));
         to.writeBoolean(this.title != null); if(this.title != null) ByteBufUtils.writeUTF8String(to, ITextComponent.Serializer.componentToJson(this.title));
+        to.writeBoolean(this.itemModel != null); if(this.itemModel != null) {
+            to.writeBoolean(this.itemModel instanceof ModelResourceLocation);
+            ByteBufUtils.writeUTF8String(to, this.itemModel.toString());
+        }
     }
 }

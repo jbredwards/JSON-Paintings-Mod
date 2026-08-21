@@ -21,6 +21,7 @@ import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.event.ModelRegistryEvent;
@@ -82,8 +83,8 @@ final class ModelHandler
     static final class PaintingModel extends BakedModelWrapper<IBakedModel>
     {
         @Nonnull
-        public static final LoadingCache<ModelResourceLocation, IBakedModel> MODELS = CacheBuilder.newBuilder().build(CacheLoader.from(location -> {
-            @Nonnull final IModel model = ModelLoaderRegistry.getModelOrLogError(location, "Could not find model for " + location);
+        public static final LoadingCache<ResourceLocation, IBakedModel> MODELS = CacheBuilder.newBuilder().build(CacheLoader.from(location -> {
+            @Nonnull final IModel model = ModelLoaderRegistry.getModelOrMissing(location);
             return model.bake(model.getDefaultState(), DefaultVertexFormats.ITEM, ModelLoader.defaultTextureGetter());
         }));
 
@@ -107,7 +108,7 @@ final class ModelHandler
                     @Nullable final EntityPainting.EnumArt art = PaintingHelper.read(stack);
                     if(art == null) return originalModel;
 
-                    @Nullable final ModelResourceLocation model = ActivePaintingInfo.get(art).itemModel;
+                    @Nullable final ResourceLocation model = ActivePaintingInfo.get(art).itemModel;
                     return model != null ? MODELS.getUnchecked(model) : originalModel;
                 }
             };
