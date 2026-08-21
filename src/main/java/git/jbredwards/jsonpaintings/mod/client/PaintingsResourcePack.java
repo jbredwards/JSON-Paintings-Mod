@@ -57,17 +57,19 @@ public class PaintingsResourcePack extends FolderResourcePack implements FMLCont
     public Set<String> getResourceDomains() {
         close();
 
+        @Nonnull final Set<String> domains = new HashSet<>();
         @Nullable final File[] packs = ASMHandler.paintingsLocation.resolve("packs").toFile().listFiles();
+
         if(packs != null) for(@Nonnull final File pack : packs) {
             @Nonnull final IResourcePack resourcePack = pack.isDirectory() ? new FolderResourcePack(pack) : new FileResourcePack(pack);
-            if(!resourcePack.getResourceDomains().isEmpty()) paintingPacks.add(resourcePack);
+            @Nonnull final Set<String> packDomains = resourcePack.getResourceDomains();
+
+            domains.addAll(packDomains);
+            if(!packDomains.isEmpty()) paintingPacks.add(resourcePack);
             else if(resourcePack instanceof Closeable) IOUtils.closeQuietly((Closeable)resourcePack);
         }
-        
-        @Nonnull final Set<String> domains = new HashSet<>();
-        domains.add(JSONPaintings.MODID);
 
-        for(@Nonnull final IResourcePack pack : paintingPacks) domains.addAll(pack.getResourceDomains());
+        domains.add(JSONPaintings.MODID);
         return domains;
     }
 
