@@ -369,8 +369,6 @@ public final class JSONHandler
         if(ASMHandler.paintingsLocation.toFile().mkdirs()) try {
             Files.createDirectory(ASMHandler.paintingsLocation.resolve("packs"));
             Files.createDirectory(ASMHandler.paintingsLocation.resolve("textures"));
-            Files.write(ASMHandler.paintingsLocation.resolve("paintings.json"), Collections.singleton("[\n\n]"),
-                    StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
             Files.write(ASMHandler.paintingsLocation.resolve("README.txt"), Collections.singleton(
                     "Thank you for downloading JSON Paintings!\n" +
                     "\n" +
@@ -383,6 +381,8 @@ public final class JSONHandler
                     "\n" +
                     "Once you're done with this README.txt file, it can be deleted."
             ));
+            Files.write(ASMHandler.paintingsLocation.resolve("paintings.json"), Collections.singleton("[\n\n]"),
+                    StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
         }
 
         catch(@Nonnull final IOException e) { JSONPaintings.LOGGER.error("Could not generate directories.", e); }
