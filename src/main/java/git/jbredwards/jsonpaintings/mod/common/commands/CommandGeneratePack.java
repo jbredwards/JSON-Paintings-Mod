@@ -9,12 +9,18 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.event.ClickEvent;
 import org.apache.commons.io.IOUtils;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.FileSystem;
@@ -68,14 +74,14 @@ final class CommandGeneratePack extends CommandBase
         @Nonnull JsonArray pack = null;
         try(@Nonnull final Reader reader = Files.newBufferedReader(ASMHandler.paintingsLocation.resolve("paintings.json"))) {
             pack = fixFrontTextures(new JsonParser().parse(IOUtils.toString(reader).replaceAll(JSONPaintings.MODID + ":", id + ":")).getAsJsonArray(), id);
-        } catch(@Nonnull final IOException | JsonParseException e) { error(e); }
+        } catch(@Nonnull final IOException | JsonParseException e) { error(e, null); }
 
         // Create pack file.
         @Nonnull final Path out = getTimestampedPath();
         try {
             Files.createDirectories(out.getParent());
             try(@Nonnull final ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(out))) { zip.finish(); }
-        } catch(@Nonnull final IOException e) { error(e); }
+        } catch(@Nonnull final IOException e) { error(e, out); }
 
         // Compile pack.
         try(@Nonnull final FileSystem fs = FileSystems.newFileSystem(out, null)) {
@@ -97,12 +103,14 @@ final class CommandGeneratePack extends CommandBase
 
         // Error during compiling.
         catch(@Nonnull final IOException | RuntimeException e) {
-            error(e instanceof RuntimeException ? e.getCause() : e);
-            try { Files.delete(out); }
-            catch(@Nonnull final IOException ignored) {}
+            error(e instanceof RuntimeException ? e.getCause() : e, out);
         }
 
-        notifyCommandListener(sender, this, "jsonpaintings.command.pack.success", "out/" + out.getFileName());
+        // Success.
+        @Nullable final ClickEvent event;
+        @Nullable final Entity entity = sender.getCommandSenderEntity();
+        event = entity instanceof EntityPlayerMP && ((EntityPlayerMP)entity).connection.netManager.isLocalChannel() ? new ClickEvent(ClickEvent.Action.OPEN_FILE, out.toAbsolutePath().toString()) : null;
+        notifyCommandListener(sender, this, "jsonpaintings.command.pack.success", new TextComponentString(out.getFileName().toString()).setStyle(new Style().setUnderlined(Boolean.TRUE).setClickEvent(event)));
     }
 
     @Nonnull
@@ -162,8 +170,13 @@ final class CommandGeneratePack extends CommandBase
         });
     }
 
-    private static void error(@Nonnull final Throwable e) throws CommandException {
+    private static void error(@Nonnull final Throwable e, @Nullable final Path out) throws CommandException {
         JSONPaintings.LOGGER.error(e);
+        if(out != null) {
+            try { Files.delete(out); }
+            catch(@Nonnull final IOException ignored) {}
+        }
+
         throw new CommandException("jsonpaintings.command.pack.error");
     }
 

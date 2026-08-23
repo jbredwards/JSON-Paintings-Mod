@@ -13,6 +13,11 @@ jsonpaintings.command.usage.trimmed=/paintings reload
 jsonpaintings.command.list.success=%s Dumped all painting motives to the server log
 jsonpaintings.command.list.usage=/jsonpaintings list
 jsonpaintings.command.list.usage.trimmed=/paintings list
+jsonpaintings.command.pack.error=Failed to create pack. Check the server log for errors
+jsonpaintings.command.pack.start=Saving paintings.json to pack...
+jsonpaintings.command.pack.success=Saved pack as %s
+jsonpaintings.command.pack.usage=/jsonpaintings pack <id> <name>
+jsonpaintings.command.pack.usage.trimmed=/paintings pack <id> <name>
 jsonpaintings.command.tree.usage=/jsonpaintings <subcommand>
 jsonpaintings.command.tree.usage.trimmed=/paintings <subcommand>
 
