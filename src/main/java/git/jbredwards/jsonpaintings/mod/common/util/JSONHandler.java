@@ -92,7 +92,7 @@ public final class JSONHandler
             @Nonnull final String itemModel = JsonUtils.getString(json.get("item_model"), "item_model");
             @Nonnull final ResourceLocation loc = itemModel.indexOf(':') == -1 ? new ResourceLocation(info.modId, itemModel) : new ResourceLocation(itemModel);
             // Allow blockstates to be provided as the "models/item" format, if they don't have a defined blockstate variant.
-            info.itemModel = itemModel.indexOf('#') != -1 ? new ModelResourceLocation(loc.toString()) : new ResourceLocation(loc.getNamespace(), "item/" + loc.getPath());
+            info.itemModel = itemModel.indexOf('#') != -1 ? new ModelResourceLocation(loc.toString()) : loc;
         }
 
         // Exclusive paintings.
@@ -319,7 +319,15 @@ public final class JSONHandler
             if(domainFiles != null) for(@Nonnull final File domain : domainFiles) if(domain.isDirectory()) domains.add(domain.getName());
         }
         else try(@Nonnull final ZipFile packZip = new ZipFile(pack)) {
-            for(@Nonnull final Enumeration<? extends ZipEntry> it = packZip.entries(); it.hasMoreElements();) {
+            @Nullable final ZipEntry packInfo = packZip.getEntry(JSONPaintings.MODID + ".pack.json");
+            if(packInfo != null) try(@Nonnull final Reader reader = new InputStreamReader(packZip.getInputStream(packInfo))) {
+                @Nonnull final JsonObject json = new JsonParser().parse(reader).getAsJsonObject();
+                try { domains.add(JsonUtils.getString(json, "id")); }
+                catch(@Nonnull final JsonParseException ignored) {}
+            }
+
+            // From datapack or mod.
+            else for(@Nonnull final Enumeration<? extends ZipEntry> it = packZip.entries(); it.hasMoreElements();) {
                 @Nonnull final ZipEntry entry = it.nextElement();
                 if(entry.getName().length() > 5 && entry.getName().startsWith("data/")) {
                     @Nonnull final String domain = entry.getName().substring(5);
@@ -341,6 +349,7 @@ public final class JSONHandler
         else try(@Nonnull final ZipFile packZip = new ZipFile(pack)) {
             // Fabric mod.
             @Nullable ZipEntry modInfo = packZip.getEntry("fabric.mod.json");
+            if(modInfo == null) modInfo = packZip.getEntry(JSONPaintings.MODID + ".pack.json"); // Painting pack.
             if(modInfo != null) try(@Nonnull final Reader reader = new InputStreamReader(packZip.getInputStream(modInfo))) {
                 @Nonnull final JsonObject json = new JsonParser().parse(reader).getAsJsonObject();
                 try { return JsonUtils.getString(json, "name"); }
@@ -369,6 +378,7 @@ public final class JSONHandler
     private static void createFolders() {
         if(ASMHandler.paintingsLocation.toFile().mkdirs()) try {
             Files.createDirectory(ASMHandler.paintingsLocation.resolve("packs"));
+            Files.createDirectory(ASMHandler.paintingsLocation.resolve("models"));
             Files.createDirectory(ASMHandler.paintingsLocation.resolve("textures"));
             Files.write(ASMHandler.paintingsLocation.resolve("README.txt"), Collections.singleton(
                     "Thank you for downloading JSON Paintings!\n" +
