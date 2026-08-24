@@ -91,7 +91,7 @@ The following is a summary which goes over the possible values and customization
 ---
 
 ## Painting Packs
-Painting packs are new to JSON Paintings v1.5.0, and serve as a convienent way to share your paintings or use paintings made by other players! To get started, create a new folder in your `.minecraft/paintings` folder and name it `packs` (file structure should be `.minecraft/paintings/packs`). This is where you can put any painting pack files you want to add!
+Painting packs are new to JSON Paintings v1.5.0, and serve as a convenient way to share your paintings or use paintings made by other players! To get started, create a new folder in your `.minecraft/paintings` folder and name it `packs` (file structure should be `.minecraft/paintings/packs`). This is where you can put any painting pack files you want to add!
 
 JSON Paintings also treats [datapacks](https://minecraft.wiki/w/Data_pack) and mods that add paintings for **1.21+** as painting packs, so those can also be added to the `.minecraft/paintings/packs` folder! Note: If a datapack has a required resourcepack, place the resourcepack in the `.minecraft/paintings/packs` folder alongside the datapack.
 
