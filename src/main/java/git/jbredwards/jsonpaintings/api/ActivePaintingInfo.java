@@ -30,6 +30,8 @@ public final class ActivePaintingInfo extends PaintingInfo
     @ApiStatus.AvailableSince("1.5.0")
     @Nonnull
     public final EntityPainting.EnumArt painting;
+
+    @ApiStatus.Internal
     private ActivePaintingInfo(@Nonnull final EntityPainting.EnumArt painting) {
         this.painting = Objects.requireNonNull(painting);
     }

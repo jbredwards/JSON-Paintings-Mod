@@ -55,10 +55,7 @@ public interface IJSONPainting
     @Deprecated default boolean hasSideTexture() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).sideTexture != null || hasBackTexture(); }
     @Deprecated default void setHasSideTexture(final boolean hasTexture) { /* NO-OP */ }
 
-    @Deprecated default boolean useSpecialRenderer() {
-        @Nonnull final ActivePaintingInfo info = ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this);
-        return info.frontTexture != null || info.backTexture != null || info.sideTexture != null;
-    }
+    @Deprecated default boolean useSpecialRenderer() { return ActivePaintingInfo.get((EntityPainting.EnumArt)(Object)this).frontTexture != null; }
     @Deprecated default void setUseSpecialRenderer(final boolean useSpecialRenderer) { /* NO-OP */ }
 
     @Nonnull

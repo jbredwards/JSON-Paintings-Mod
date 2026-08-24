@@ -13,6 +13,7 @@ import git.jbredwards.jsonpaintings.api.PaintingInfo;
 import git.jbredwards.jsonpaintings.mod.JSONPaintings;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraftforge.common.util.EnumHelper;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -22,6 +23,7 @@ import javax.annotation.Nullable;
  * @author jbred
  *
  */
+@ApiStatus.Internal
 public final class JsonPaintingInfo implements Runnable
 {
     @Nonnull public final String motive;

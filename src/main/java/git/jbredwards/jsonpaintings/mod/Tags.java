@@ -15,5 +15,5 @@ import javax.annotation.Nonnull;
 final class Tags
 {
     @Nonnull
-    public static final String MOD_ID = "jsonpaintings", NAME = "JSON Paintings", VERSION = "1.4.0";
+    public static final String MOD_ID = "jsonpaintings", NAME = "JSON Paintings", VERSION = "1.5.0";
 }
